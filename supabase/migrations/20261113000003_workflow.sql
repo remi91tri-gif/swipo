@@ -271,8 +271,10 @@ begin
   perform public._notify_assignees(p_job, 'reprise_demandee');
 end $$;
 
--- Seules ces fonctions sont exposées aux utilisateurs connectés.
-revoke execute on all functions in schema public from public, anon;
+-- Seules ces fonctions sont exposées aux utilisateurs connectés. Sur Supabase, toute
+-- fonction est appelable par défaut : on retire tout, puis on rouvre la liste ci-dessous.
+-- Les fonctions internes (préfixe _) restent fermées.
+revoke execute on all functions in schema public from public, anon, authenticated;
 grant execute on function public.normalize_phone(text), public.my_company_ids(), public.my_member_id(uuid),
   public.has_role(uuid, public.member_role[]), public.is_assigned(uuid), public.can_see_job(uuid),
   public.create_company(text, text, text, text, text[]), public.claim_invitation(),

@@ -135,6 +135,14 @@ select pg_temp.check(public.start_job(:'job2') = 'en_cours', 'Karim redémarre l
 select pg_temp.check((select count(*) from public.job_events where job_id = :'job2' and type = 'reprise_demarree') = 1, 'La reprise apparaît dans l''historique');
 reset role;
 
+-- ===== Fonctions internes fermées =====
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);
+set role authenticated;
+select pg_temp.fails(format($$select public._log_event(%L, %L, 'faux', null)$$, :'company_a', :'job'), 'Paul ne peut pas écrire dans l''historique de A');
+select pg_temp.fails(format($$select public._notify_managers(%L, %L, 'spam')$$, :'company_a', :'job'), 'Paul ne peut pas envoyer de notifications à A');
+select pg_temp.fails(format($$select public._refresh_planning_status(%L)$$, :'job'), 'Paul ne peut pas appeler les fonctions internes');
+reset role;
+
 -- ===== Visiteur non connecté =====
 select set_config('request.jwt.claim.sub', '', false);
 set role anon;

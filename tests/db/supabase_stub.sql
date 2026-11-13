@@ -15,3 +15,5 @@ grant execute on function auth.uid() to anon, authenticated;
 grant usage on schema public to anon, authenticated;
 alter default privileges in schema public grant all on tables to anon, authenticated;
 alter default privileges in schema public grant all on sequences to anon, authenticated;
+-- Comme sur Supabase : toute nouvelle fonction est exécutable par anon et authenticated.
+alter default privileges in schema public grant execute on functions to anon, authenticated;
