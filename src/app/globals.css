@@ -129,3 +129,9 @@ h3 {
     animation: none !important;
   }
 }
+
+/* Logo : version sombre ou claire selon le thème. */
+:root[data-theme="dark"] .only-light,
+:root:not([data-theme="dark"]) .only-dark {
+  display: none !important;
+}

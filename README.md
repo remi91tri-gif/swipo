@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Swipo
 
-## Getting Started
+Le suivi de chantiers des petites entreprises de nettoyage. *Un geste, tout est net.*
 
-First, run the development server:
+- **Espace gérant** (ordinateur) : `/aujourdhui`, `/equipe`
+- **Espace agent** (téléphone) : `/agent`, connexion par code SMS sur `/agent/connexion`
+
+## Démarrer en local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Puis ouvrir http://localhost:3000. Sans configuration Supabase, l'application tourne en **mode démonstration** :
+données d'exemple, rien n'est enregistré.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Brancher Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Créer un projet sur supabase.com (région Europe).
+2. Appliquer les migrations du dossier `supabase/migrations`, dans l'ordre.
+3. Copier `.env.example` en `.env.local` et renseigner l'URL et la clé publique (anon) du projet.
+4. Pour la connexion des agents par SMS : activer le fournisseur « Phone » dans Supabase › Authentication.
 
-## Learn More
+## Tests de la base de données
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+./tests/db/run.sh
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Lance un PostgreSQL jetable qui imite Supabase, applique les migrations et vérifie la sécurité
+(une entreprise ne voit jamais les données d'une autre) et le cycle d'un chantier.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Organisation
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Dossier | Contenu |
+| --- | --- |
+| `src/app/(auth)` | Connexion, inscription, connexion agent par SMS |
+| `src/app/(gerant)` | Espace gérant avec la barre latérale |
+| `src/app/(agent)` | Espace agent |
+| `src/components` | Éléments d'interface de la charte (boutons, cartes, pastilles, thème) |
+| `src/lib` | Données, mode démonstration, formats |
+| `supabase/migrations` | Schéma, sécurité, règles métier |
+| `tests/db` | Tests de la base |

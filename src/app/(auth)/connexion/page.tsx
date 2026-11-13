@@ -1,0 +1,37 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { SignInForm } from "./sign-in-form";
+
+export const metadata: Metadata = { title: "Connexion" };
+
+export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ confirmer?: string }> }) {
+  const { confirmer } = await searchParams;
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-1.5 text-center">
+        <h1 className="font-display text-[28px] leading-9 font-semibold tracking-[-0.025em]">Connexion</h1>
+        <p className="text-ink-muted">Espace gérant</p>
+      </div>
+      {confirmer && (
+        <p role="status" className="rounded-md bg-azur-subtle px-4 py-3 text-sm text-ink">
+          Votre compte est créé. Cliquez sur le lien reçu par e-mail pour le confirmer, puis connectez-vous.
+        </p>
+      )}
+      <SignInForm />
+      <div className="flex flex-col gap-2 text-center text-sm text-ink-muted">
+        <p>
+          Pas encore de compte ?{" "}
+          <Link href="/inscription" className="font-semibold">
+            Créer mon entreprise
+          </Link>
+        </p>
+        <p>
+          Vous êtes agent ?{" "}
+          <Link href="/agent/connexion" className="font-semibold">
+            Connexion par SMS
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,36 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { isDemo, supabaseAnonKey, supabaseUrl } from "@/lib/env";
+
+const PUBLIC_PATHS = ["/connexion", "/inscription", "/agent/connexion"];
+
+/** Rafraîchit la session et renvoie vers la connexion si besoin. */
+export async function updateSession(request: NextRequest) {
+  if (isDemo) return NextResponse.next({ request });
+
+  let response = NextResponse.next({ request });
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: (list) => {
+        list.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        list.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+      },
+    },
+  });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const path = request.nextUrl.pathname;
+  const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
+
+  if (!user && !isPublic) {
+    const url = request.nextUrl.clone();
+    url.pathname = path.startsWith("/agent") ? "/agent/connexion" : "/connexion";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+  return response;
+}
