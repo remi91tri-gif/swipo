@@ -114,6 +114,7 @@ export type JobDetail = JobListItem & {
   events: JobEvent[];
   leadId: string | null;
   finishComment: string | null;
+  photos: { id: string; kind: "avant" | "apres" | "probleme" | "reference" | "autre"; url: string | null }[];
 };
 
 export type PlanningDay = {

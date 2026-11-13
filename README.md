@@ -43,10 +43,13 @@ Lance un PostgreSQL jetable qui imite Supabase, applique les migrations et véri
 | `supabase/migrations` | Schéma, sécurité, règles métier |
 | `tests/db` | Tests de la base |
 
-## Test du parcours gérant
+## Tests des parcours (navigateur, sur une vraie base Supabase)
 
 ```bash
 E2E_URL=http://localhost:3000 E2E_EMAIL=… E2E_PASSWORD=… node tests/e2e/gerant.mjs
+E2E_URL=… E2E_EMAIL=… E2E_PASSWORD=… E2E_AGENT_EMAIL=… E2E_AGENT_PASSWORD=… node tests/e2e/agent.mjs
 ```
+
+Si Playwright est installé ailleurs que dans le projet : `PLAYWRIGHT_PATH=/chemin/vers/playwright/index.js`.
 
 Connexion, création de l'entreprise, équipe, client, chantiers, conflit d'agenda, planning et tableau de bord, sur une vraie base Supabase.

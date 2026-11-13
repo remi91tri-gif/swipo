@@ -1,4 +1,6 @@
-import { chromium } from 'playwright';
+// Playwright préinstallé ailleurs : PLAYWRIGHT_PATH=/chemin/vers/playwright/index.js
+const pw = await import(process.env.PLAYWRIGHT_PATH ?? "playwright");
+const { chromium } = pw.default ?? pw;
 // Parcours complet du gérant sur une instance branchée à Supabase.
 // Usage : E2E_URL=http://localhost:3000 E2E_EMAIL=… E2E_PASSWORD=… node tests/e2e/gerant.mjs
 // Le compte doit être un gérant dont l'entreprise est vide (première connexion).

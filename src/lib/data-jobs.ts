@@ -2,6 +2,7 @@ import "server-only";
 import { isDemo } from "./env";
 import { demoMembers } from "./demo";
 import { createClient } from "./supabase/server";
+import { signedPhotoUrls } from "./data-agent";
 import type { Client, JobDetail, JobListItem, JobStatus, Member, PlanningDay, Session, Site } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -186,13 +187,14 @@ export async function getJob(session: Session, id: string): Promise<JobDetail | 
       ],
       leadId: base.team[0]?.id ?? null,
       finishComment: base.status === "termine" ? "Calcaire tenace en bas de la vitrine côté quai." : null,
+      photos: [],
     };
   }
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("jobs")
     .select(
-      "id, client_id, title, scheduled_date, start_time, duration_min, status, instructions, photos_after_required, finish_comment, clients(name, phone), sites(address, access_info, onsite_contact), job_assignments(member_id, is_lead), checklist_items(id, label, done, position), job_services(label), job_events(at, type, actor_id, data)",
+      "id, client_id, title, scheduled_date, start_time, duration_min, status, instructions, photos_after_required, finish_comment, clients(name, phone), sites(address, access_info, onsite_contact), job_assignments(member_id, is_lead), checklist_items(id, label, done, position), job_services(label), job_events(at, type, actor_id, data), photos(id, kind, storage_path, taken_at)",
     )
     .eq("company_id", session.company.id)
     .eq("id", id)
@@ -211,8 +213,11 @@ export async function getJob(session: Session, id: string): Promise<JobDetail | 
     checklist_items: { id: string; label: string; done: boolean; position: number }[];
     job_services: { label: string }[];
     job_events: { at: string; type: string; actor_id: string | null; data: Record<string, unknown> }[];
+    photos: { id: string; kind: JobDetail["photos"][number]["kind"]; storage_path: string; taken_at: string }[];
   };
   const r = data as unknown as Row;
+  const photos = [...r.photos].sort((a, b) => a.taken_at.localeCompare(b.taken_at));
+  const urls = await signedPhotoUrls(photos.map((ph) => ph.storage_path));
   return {
     ...toListItem(r, people),
     clientId: r.client_id,
@@ -229,6 +234,7 @@ export async function getJob(session: Session, id: string): Promise<JobDetail | 
       .map((e) => ({ at: e.at, type: e.type, actor: e.actor_id ? (people.get(e.actor_id)?.firstName ?? null) : null, data: e.data })),
     leadId: r.job_assignments.find((a) => a.is_lead)?.member_id ?? null,
     finishComment: r.finish_comment,
+    photos: photos.map((ph) => ({ id: ph.id, kind: ph.kind, url: urls.get(ph.storage_path) ?? null })),
   };
 }
 

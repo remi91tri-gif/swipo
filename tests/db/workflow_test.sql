@@ -168,6 +168,45 @@ set role authenticated;
 select pg_temp.fails(format($$select public.create_job(p_title => 'Agent', p_trade => '', p_client => %L, p_site => %L)$$, :'client', :'site'), 'Un agent ne peut pas créer de chantier');
 reset role;
 
+-- ===== Lot 3 : stockage des photos =====
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', false);
+set role authenticated;
+insert into storage.objects (bucket_id, name) values ('photos', format('%s/%s/avant-1.jpg', :'company_a', :'job3'));
+select pg_temp.check((select count(*) from storage.objects) = 1, 'Karim dépose une photo dans son chantier');
+select pg_temp.fails(format($$insert into storage.objects (bucket_id, name) values ('photos', '%s/%s/x.jpg')$$, :'company_a', :'job4'), 'Karim ne peut pas déposer dans un chantier où il n''est pas affecté');
+select pg_temp.fails(format($$insert into storage.objects (bucket_id, name) values ('photos', '%s/%s/x.jpg')$$, :'company_b', :'job3'), 'Un chemin incohérent (mauvaise entreprise) est refusé');
+select pg_temp.fails(format($$insert into storage.objects (bucket_id, name) values ('photos', 'n-importe-quoi.jpg')$$), 'Un chemin mal formé est refusé');
+reset role;
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);
+set role authenticated;
+select pg_temp.check((select count(*) from storage.objects) = 0, 'Paul ne voit aucune photo de A');
+select pg_temp.fails(format($$insert into storage.objects (bucket_id, name) values ('photos', '%s/%s/intrus.jpg')$$, :'company_a', :'job3'), 'Paul ne peut pas déposer de photo chez A');
+reset role;
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select pg_temp.check((select count(*) from storage.objects) = 1, 'Marc voit la photo de Karim');
+reset role;
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', false);
+set role authenticated;
+delete from storage.objects;
+reset role;
+select pg_temp.check((select count(*) from storage.objects) = 1, 'Karim (agent) ne peut pas supprimer de photo');
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);
+set role authenticated;
+delete from storage.objects;
+reset role;
+select pg_temp.check((select count(*) from storage.objects) = 1, 'Paul ne peut pas supprimer une photo de A');
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+delete from storage.objects;
+reset role;
+select pg_temp.check((select count(*) from storage.objects) = 0, 'Marc (gérant) supprime une photo de son chantier');
+
 -- ===== Fonctions internes fermées =====
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);
 set role authenticated;

@@ -55,6 +55,27 @@ export default async function JobPage({ params, searchParams }: { params: Promis
             )}
           </Card>
 
+          {job.photos.length > 0 && (
+            <Card className="flex flex-col gap-4 p-7">
+              <CardTitle action={<span className="text-sm text-ink-muted">{job.photos.filter((p) => p.kind === "avant").length} avant · {job.photos.filter((p) => p.kind === "apres").length} après</span>}>Photos</CardTitle>
+              <div className="grid grid-cols-3 gap-3">
+                {job.photos.map((p) => (
+                  <figure key={p.id} className="m-0">
+                    {p.url ? (
+                      <a href={p.url} target="_blank" rel="noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.url} alt={`Photo ${p.kind}`} className="aspect-[4/3] w-full rounded-lg object-cover" />
+                      </a>
+                    ) : (
+                      <div className="aspect-[4/3] rounded-lg bg-hairline" />
+                    )}
+                    <figcaption className="mt-1.5 text-[13px] text-ink-muted">{p.kind === "avant" ? "Avant" : p.kind === "apres" ? "Après" : p.kind === "probleme" ? "Problème" : "Photo"}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {job.instructions && (
             <Card className="flex flex-col gap-2.5 p-7">
               <CardTitle>Consignes</CardTitle>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogOut, MapPin, Users } from "lucide-react";
 import { signOut } from "@/app/auth-actions";
@@ -50,7 +51,7 @@ export default async function AgentTodayPage() {
         </div>
 
         {next && (
-          <article className="flex flex-col gap-4 rounded-2xl bg-ink p-[22px] text-on-ink shadow-hero">
+          <Link href={`/agent/mission/${next.id}`} className="flex flex-col gap-4 rounded-2xl bg-ink p-[22px] text-on-ink shadow-hero">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-semibold tracking-[0.06em] opacity-70">PROCHAIN CHANTIER</span>
               <span className="font-display text-[22px] font-medium tracking-[-0.02em] tabular-nums">{timeLabel(next.startTime)}</span>
@@ -66,15 +67,17 @@ export default async function AgentTodayPage() {
                 {withList(next.teammates)}
               </span>
             </div>
-            <p className="border-t border-current/15 pt-3 text-sm opacity-70">Le détail de la mission (démarrer, photos, checklist) arrive au lot 3.</p>
-          </article>
+            <span className="flex h-[52px] items-center justify-center rounded-[14px] bg-surface-raised font-semibold text-ink">
+              {next.status === "en_cours" || next.status === "a_traiter" ? "Reprendre la mission" : "Ouvrir la mission"}
+            </span>
+          </Link>
         )}
 
         {later.length > 0 && (
           <section className="flex flex-col gap-2.5">
             <h2 className="text-[13px] font-semibold tracking-[0.06em] text-ink-muted">ENSUITE</h2>
             {later.map((m) => (
-              <div key={m.id} className="flex items-center gap-4 rounded-xl border border-line bg-surface-raised p-[18px]">
+              <Link key={m.id} href={`/agent/mission/${m.id}`} className="flex items-center gap-4 rounded-xl border border-line bg-surface-raised p-[18px] text-ink">
                 <span className="w-[52px] font-display text-lg font-medium tracking-[-0.02em] tabular-nums">{timeLabel(m.startTime)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold">{m.title}</span>
@@ -83,7 +86,7 @@ export default async function AgentTodayPage() {
                   </span>
                 </span>
                 {m.status !== "planifie" && <StatusPill status={m.status} />}
-              </div>
+              </Link>
             ))}
           </section>
         )}
