@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { redirect } from "next/navigation";
 import { isDemo } from "./env";
 import { demoAgentDay, demoAgentSession, demoDashboard, demoMembers, demoSession } from "./demo";
 import { createClient } from "./supabase/server";
@@ -59,8 +60,12 @@ export const getSession = cache(async (): Promise<Session | null> => {
   const supabase = await createClient();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) {
+    if (userError && userError.name !== "AuthSessionMissingError") console.error("getSession: utilisateur illisible", userError.name, userError.message);
+    return null;
+  }
 
   const load = () =>
     supabase
@@ -71,27 +76,42 @@ export const getSession = cache(async (): Promise<Session | null> => {
       .limit(1)
       .maybeSingle();
 
-  let { data } = await load();
+  const first = await load();
+  if (first.error) console.error("getSession: lecture du membre impossible", first.error);
+  let data = first.data;
   const meta = user.user_metadata ?? {};
   if (!data && typeof meta.company_name === "string" && meta.company_name) {
-    await supabase.rpc("create_company", {
+    const created = await supabase.rpc("create_company", {
       p_name: meta.company_name,
       p_first_name: meta.first_name ?? "",
       p_last_name: meta.last_name ?? "",
       p_phone: meta.phone ?? null,
       p_trades: Array.isArray(meta.trades) ? meta.trades : [],
     });
-    ({ data } = await load());
+    if (created.error) console.error("getSession: création de l'entreprise", created.error);
+    const second = await load();
+    if (second.error) console.error("getSession: relecture", second.error);
+    data = second.data;
   }
   if (!data && user.phone) {
     await supabase.rpc("claim_invitation");
     ({ data } = await load());
   }
-  if (!data) return null;
+  if (!data) {
+    console.error("getSession: aucun membre pour", user.id);
+    return null;
+  }
 
   const company = (Array.isArray(data.companies) ? data.companies[0] : data.companies) as { id: string; name: string };
   return { company, member: toMember(data as MemberRow) };
 });
+
+/** Session obligatoire : sans connexion valide, retour à la page de connexion. */
+export async function requireSession(): Promise<Session> {
+  const session = await getSession();
+  if (!session) redirect("/connexion");
+  return session;
+}
 
 /** Session de l'espace agent. En démonstration, on y voit Karim, un agent. */
 export async function getAgentSession(): Promise<Session | null> {

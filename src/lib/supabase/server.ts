@@ -7,6 +7,11 @@ import { supabaseAnonKey, supabaseUrl } from "@/lib/env";
 export async function createClient() {
   const cookieStore = await cookies();
   return createServerClient(supabaseUrl, supabaseAnonKey, {
+    // Next.js mémorise les requêtes GET identiques pendant un même affichage : une relecture
+    // juste après une écriture renverrait l'ancien résultat. Un signal neuf désactive cette mémoire.
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store", signal: init?.signal ?? new AbortController().signal }),
+    },
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (list) => {

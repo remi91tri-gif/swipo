@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { LogOut, MapPin, Users } from "lucide-react";
 import { signOut } from "@/app/auth-actions";
 import { ThemeButton } from "@/components/theme-toggle";
@@ -16,7 +17,8 @@ function withList(names: string[]) {
 }
 
 export default async function AgentTodayPage() {
-  const session = (await getAgentSession())!;
+  const session = await getAgentSession();
+  if (!session) redirect("/agent/connexion");
   const day = await getAgentDay(session);
   const [next, ...later] = day.missions.filter((m) => m.status !== "termine");
   const done = day.missions.filter((m) => m.status === "termine").length;

@@ -69,3 +69,49 @@ export function todayLabel(date = new Date()) {
     .format(date)
     .toUpperCase();
 }
+
+/** « 2026-11-13 » → « ven. 13 nov. » */
+export function shortDate(iso: string | null) {
+  if (!iso) return "Sans date";
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/** « 2026-11-13 » → « vendredi 13 novembre » */
+export function longDate(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+export function addDays(iso: string, days: number) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+export function durationLabel(min: number | null) {
+  if (!min) return "";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h ? `${h} h${m ? ` ${String(m).padStart(2, "0")}` : ""}` : `${m} min`;
+}
+
+export const CLIENT_TYPE_LABEL = { particulier: "Particulier", professionnel: "Professionnel", syndic: "Syndic", agence: "Agence" } as const;
+
+export function eventLabel(type: string, actor: string | null) {
+  const who = actor ?? "Quelqu'un";
+  switch (type) {
+    case "cree": return "Chantier créé";
+    case "demarre": return `${who} démarre`;
+    case "termine": return `${who} termine`;
+    case "imprevu": return `${who} signale un imprévu`;
+    case "decision": return `Décision de ${who}`;
+    case "valide": return `Validé par ${who}`;
+    case "reprise_demandee": return "Reprise demandée";
+    case "reprise_demarree": return `${who} démarre la reprise`;
+    default: return type;
+  }
+}
+
+export function clockTime(iso: string) {
+  return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(iso));
+}

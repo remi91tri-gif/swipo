@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertCircle, ChevronRight, Plus } from "lucide-react";
 import { Avatar, AvatarStack, Card, CardTitle, LinkButton, PageHeader, StatusPill } from "@/components/ui";
-import { getDashboard, getSession } from "@/lib/data";
+import { getDashboard, requireSession } from "@/lib/data";
 import { timeLabel } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Aujourd'hui" };
@@ -15,7 +15,7 @@ function summary(blockers: number, jobs: number) {
 }
 
 export default async function AujourdhuiPage() {
-  const session = (await getSession())!;
+  const session = await requireSession();
   const d = await getDashboard(session);
   const stats = [
     { label: "Chantiers prévus", value: d.counts.prevus, tone: "text-ink" },

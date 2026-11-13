@@ -42,3 +42,11 @@ Lance un PostgreSQL jetable qui imite Supabase, applique les migrations et véri
 | `src/lib` | Données, mode démonstration, formats |
 | `supabase/migrations` | Schéma, sécurité, règles métier |
 | `tests/db` | Tests de la base |
+
+## Test du parcours gérant
+
+```bash
+E2E_URL=http://localhost:3000 E2E_EMAIL=… E2E_PASSWORD=… node tests/e2e/gerant.mjs
+```
+
+Connexion, création de l'entreprise, équipe, client, chantiers, conflit d'agenda, planning et tableau de bord, sur une vraie base Supabase.

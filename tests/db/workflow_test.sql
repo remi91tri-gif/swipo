@@ -135,6 +135,39 @@ select pg_temp.check(public.start_job(:'job2') = 'en_cours', 'Karim redémarre l
 select pg_temp.check((select count(*) from public.job_events where job_id = :'job2' and type = 'reprise_demarree') = 1, 'La reprise apparaît dans l''historique');
 reset role;
 
+-- ===== Lot 2 : création d'un chantier en une opération =====
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select public.create_job(
+  p_title => 'Nettoyage après déménagement', p_trade => 'Après déménagement',
+  p_new_client => '{"name": "Mme Rossi", "phone": "0611111111"}'::jsonb,
+  p_new_site => '{"address": "18 bd de Cimiez, 06000 Nice", "access_info": "Clés chez la gardienne"}'::jsonb,
+  p_date => current_date, p_time => '14:00', p_duration => 120,
+  p_photos_required => true, p_checklist => array['Cuisine', 'Salle de bain', '  '],
+  p_members => array[:'karim'::uuid], p_lead => :'karim'::uuid
+) as job3 \gset
+select pg_temp.check((select status from public.jobs where id = :'job3') = 'planifie', 'Le nouveau chantier avec agent et horaire est Planifié');
+select pg_temp.check((select count(*) from public.checklist_items where job_id = :'job3') = 2, 'La checklist ignore les lignes vides (2 points)');
+select pg_temp.check((select checklist_required and photos_before_required and photos_after_required from public.jobs where id = :'job3'), 'Photos et checklist sont exigées');
+select pg_temp.check((select count(*) from public.clients where name = 'Mme Rossi') = 1, 'Le nouveau client est créé');
+select pg_temp.check((select count(*) from public.job_services where job_id = :'job3') = 1, 'La prestation est enregistrée');
+select pg_temp.check((select is_lead from public.job_assignments where job_id = :'job3') , 'Karim est responsable du chantier');
+select pg_temp.fails($$select public.create_job(p_title => 'Sans adresse', p_trade => '', p_new_client => '{"name": "X"}'::jsonb)$$, 'Un chantier sans adresse est refusé');
+select pg_temp.check((select count(*) from public.clients where name = 'X') = 0, 'Un échec ne laisse pas de client créé à moitié');
+select public.create_job(p_title => 'Sans agent', p_trade => '', p_client => :'client', p_site => :'site') as job4 \gset
+select pg_temp.check((select status from public.jobs where id = :'job4') = 'a_planifier', 'Sans agent ni date, le chantier est À planifier');
+reset role;
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);
+set role authenticated;
+select pg_temp.fails(format($$select public.create_job(p_title => 'Intrus', p_trade => '', p_client => %L, p_site => %L)$$, :'client', :'site'), 'Paul ne peut pas créer de chantier chez un client de A');
+reset role;
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', false);
+set role authenticated;
+select pg_temp.fails(format($$select public.create_job(p_title => 'Agent', p_trade => '', p_client => %L, p_site => %L)$$, :'client', :'site'), 'Un agent ne peut pas créer de chantier');
+reset role;
+
 -- ===== Fonctions internes fermées =====
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);
 set role authenticated;
@@ -149,5 +182,15 @@ set role anon;
 select pg_temp.check((select count(*) from public.jobs) = 0, 'Un visiteur non connecté ne voit rien');
 select pg_temp.fails($$select public.create_company('X', 'Y')$$, 'Un visiteur ne peut pas créer d''entreprise');
 reset role;
+
+-- ===== Effacement complet d'une entreprise (RGPD) =====
+reset role;
+delete from public.companies where id = :'company_a';
+select pg_temp.check(
+  (select count(*) from public.jobs) + (select count(*) from public.clients) + (select count(*) from public.photos)
+  + (select count(*) from public.incidents) + (select count(*) from public.job_events) + (select count(*) from public.notifications)
+  + (select count(*) from public.members where company_id = :'company_a') = 0,
+  'Supprimer l''entreprise A efface toutes ses données');
+select pg_temp.check((select count(*) from public.companies where id = :'company_b') = 1, 'L''entreprise B est intacte');
 
 \echo 'Tous les tests de la base sont passés.'

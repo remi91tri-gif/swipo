@@ -66,6 +66,62 @@ export type TeamNow = {
   detail: string;
 };
 
+export type ClientType = "particulier" | "professionnel" | "syndic" | "agence";
+
+export type Site = {
+  id: string;
+  address: string;
+  accessInfo: string | null;
+  onsiteContact: string | null;
+  label: string | null;
+};
+
+export type Client = {
+  id: string;
+  name: string;
+  type: ClientType;
+  phone: string | null;
+  email: string | null;
+  contactName: string | null;
+  notes: string | null;
+  sites: Site[];
+};
+
+export type JobListItem = {
+  id: string;
+  title: string;
+  clientName: string;
+  city: string;
+  date: string | null;
+  startTime: string | null;
+  durationMin: number | null;
+  status: JobStatus;
+  team: Pick<Member, "id" | "firstName" | "lastName">[];
+};
+
+export type JobEvent = { at: string; type: string; actor: string | null; data: Record<string, unknown> };
+
+export type JobDetail = JobListItem & {
+  clientId: string;
+  clientPhone: string | null;
+  address: string;
+  accessInfo: string | null;
+  onsiteContact: string | null;
+  instructions: string | null;
+  photosRequired: boolean;
+  checklist: { id: string; label: string; done: boolean }[];
+  services: string[];
+  events: JobEvent[];
+  leadId: string | null;
+  finishComment: string | null;
+};
+
+export type PlanningDay = {
+  date: string;
+  rows: { member: Pick<Member, "id" | "firstName" | "lastName" | "role">; jobs: JobListItem[] }[];
+  unassigned: JobListItem[];
+};
+
 export type AgentMission = {
   id: string;
   title: string;
