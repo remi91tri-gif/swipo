@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isDemo } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
@@ -53,12 +54,16 @@ export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
   if (isDemo) redirect("/aujourdhui");
 
   const supabase = await createClient();
+  const h = await headers();
+  const origin = h.get("origin") ?? `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
   const { data, error } = await supabase.auth.signUp({
     email: fields.email,
     password,
     // L'entreprise est créée à la première connexion (voir getSession), même si
     // la confirmation de l'e-mail est demandée avant.
     options: {
+      // Le lien de l'e-mail confirme l'adresse puis ramène sur la page de connexion.
+      emailRedirectTo: `${origin}/connexion?confirme=1`,
       data: { ...fields, phone: fields.phone ? toE164(fields.phone) : null, trades },
     },
   });
