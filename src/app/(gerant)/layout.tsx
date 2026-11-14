@@ -37,7 +37,7 @@ export default async function GerantLayout({ children }: { children: React.React
       )}
       <div className="flex flex-1 flex-wrap">
         <Sidebar person={{ id: member.id, firstName: member.firstName, lastName: member.lastName, avatarUrl: member.avatarUrl }} role={member.role} companyName={company.name} signOut={signOut} />
-        <main className="min-w-0 flex-[999_1_640px] px-4 pt-10 pb-16 sm:px-12">
+        <main className="min-w-0 flex-[999_1_640px] px-4 pt-6 pb-16 sm:px-12 sm:pt-10">
           <div className="mx-auto flex max-w-[1040px] flex-col gap-8">{children}</div>
         </main>
       </div>

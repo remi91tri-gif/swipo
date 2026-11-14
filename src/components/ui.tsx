@@ -45,7 +45,7 @@ export function PageHeader({ eyebrow, title, lead, action }: { eyebrow?: string;
     <div className="flex flex-wrap items-end justify-between gap-5">
       <div className="flex flex-col gap-1.5">
         {eyebrow && <p className="text-[13px] font-semibold tracking-[0.06em] text-ink-muted">{eyebrow}</p>}
-        <h1 className="font-display text-[34px] leading-[42px] font-semibold tracking-[-0.025em]">{title}</h1>
+        <h1 className="font-display text-[28px] leading-[34px] sm:text-[34px] sm:leading-[42px] font-semibold tracking-[-0.025em]">{title}</h1>
         {lead && <p className="text-base text-ink-muted">{lead}</p>}
       </div>
       {action}

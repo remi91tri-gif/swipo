@@ -275,3 +275,7 @@ h3 {
 .legal p, .legal li { color: var(--ink); }
 .legal ul { list-style: disc; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; }
 .legal a { color: var(--azur); font-weight: 600; }
+
+/* Défilement horizontal au doigt, sans barre visible. */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

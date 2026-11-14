@@ -41,7 +41,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         <ChevronLeft aria-hidden size={16} /> {report.title}
       </Link>
       <div className="flex flex-col gap-2">
-        <h1 className="font-display text-[34px] leading-[42px] font-semibold tracking-[-0.025em]">Compte rendu client</h1>
+        <h1 className="font-display text-[28px] leading-[34px] sm:text-[34px] sm:leading-[42px] font-semibold tracking-[-0.025em]">Compte rendu client</h1>
         <p className="max-w-[640px] text-base text-ink-muted">
           Le document que vous envoyez à {report.clientName}. Il ne contient ni vos notes internes, ni les noms de vos agents.
         </p>

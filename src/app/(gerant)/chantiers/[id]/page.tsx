@@ -44,7 +44,7 @@ export default async function JobPage({ params, searchParams }: { params: Promis
           {job.durationMin ? ` · ${durationLabel(job.durationMin)}` : ""}
         </p>
         <div className="flex flex-wrap items-center gap-3.5">
-          <h1 className="font-display text-[34px] leading-[42px] font-semibold tracking-[-0.025em]">{job.title}</h1>
+          <h1 className="font-display text-[28px] leading-[34px] sm:text-[34px] sm:leading-[42px] font-semibold tracking-[-0.025em]">{job.title}</h1>
           <StatusPill status={job.status} />
           {session.member.role === "gerant" && (
             <span className="ml-auto">

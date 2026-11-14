@@ -15,7 +15,7 @@ export default async function EquipePage() {
 
   return (
     <>
-      <PageHeader eyebrow={session.company.name.toUpperCase()} title="Équipe" lead={`${active} personne${active > 1 ? "s" : ""} dans l'équipe. Chacun se connecte avec son portable, sans mot de passe.`} />
+      <PageHeader eyebrow={session.company.name.toUpperCase()} title="Équipe" lead={`${active} personne${active > 1 ? "s" : ""} dans l'équipe. Chacun se connecte avec son lien personnel, sans mot de passe.`} />
       <TeamManager initialTeam={team} origin={origin} companyName={session.company.name} meId={session.member.id} />
     </>
   );

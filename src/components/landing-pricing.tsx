@@ -30,7 +30,7 @@ export function LandingPricing() {
           </button>
         ))}
       </div>
-      <div className="grid w-full gap-5 md:grid-cols-3">
+      <div className="no-scrollbar -mx-4 flex w-[calc(100%+2rem)] snap-x snap-mandatory gap-3 overflow-x-auto px-4 pt-4 pb-2 md:mx-0 md:grid md:w-full md:snap-none md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0">
         {PLANS.map((p, k) => {
           const amount = price(p.id, interval);
           return (
@@ -38,7 +38,7 @@ export function LandingPricing() {
               key={p.id}
               data-reveal
               style={{ "--d": `${k * 110}ms` } as React.CSSProperties}
-              className={`spot group relative flex flex-col gap-5 rounded-2xl border bg-surface-raised p-8 transition-[transform,box-shadow] duration-300 hover:-translate-y-1.5 hover:shadow-hero ${p.highlight ? "border-azur shadow-hero" : "border-line shadow-card"}`}
+              className={`spot group relative flex min-w-[84%] snap-center flex-col gap-5 rounded-2xl border bg-surface-raised p-6 sm:min-w-[60%] sm:p-8 md:min-w-0 transition-[transform,box-shadow] duration-300 hover:-translate-y-1.5 hover:shadow-hero ${p.highlight ? "border-azur shadow-hero" : "border-line shadow-card"}`}
             >
               {p.highlight && (
                 <span className="absolute -top-3.5 left-8 inline-flex items-center gap-1 rounded-full bg-azur px-3 py-1 text-[12px] font-semibold text-on-azur">
@@ -71,6 +71,7 @@ export function LandingPricing() {
           );
         })}
       </div>
+      <p className="text-center text-sm text-ink-muted md:hidden">Faites glisser pour voir les 3 offres.</p>
       <p className="text-center text-sm text-ink-muted">Prix par entreprise, hors taxes. Sans carte bancaire pendant l&apos;essai, sans engagement ensuite.</p>
     </div>
   );
