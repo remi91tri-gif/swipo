@@ -245,6 +245,66 @@ select public.finish_job(:'job3', null, now() + interval '3 hours');
 select pg_temp.check((select finished_at from public.jobs where id = :'job3') <= now(), 'Une heure dans le futur est ramenée à maintenant');
 reset role;
 
+-- ===== Lot 7 : liens d'invitation =====
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000a9', null);
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+insert into public.members (company_id, first_name, role) values (:'company_a', 'Inès', 'agent') returning id as ines \gset
+select public.create_invite_link(:'ines') as lien \gset
+select pg_temp.check(length(:'lien') = 64, 'Marc obtient un lien d''invitation pour Inès');
+select pg_temp.check((select invite_hash from public.members where id = :'ines') <> :'lien', 'Seule l''empreinte du lien est gardée');
+reset role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);
+set role authenticated;
+select pg_temp.fails(format($$select public.create_invite_link(%L)$$, :'ines'), 'Paul ne peut pas créer de lien pour A');
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
+set role anon;
+select pg_temp.check((select first_name from public.invite_info(:'lien')) = 'Inès', 'Avant de rejoindre, on voit le prénom et l''entreprise');
+select pg_temp.check((select count(*) from public.invite_info('faux')) = 0, 'Un faux lien ne montre rien');
+reset role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a9', false);
+set role authenticated;
+select pg_temp.check(public.claim_invite(:'lien') = 'agent', 'L''appareil d''Inès rejoint l''équipe avec le lien');
+select pg_temp.check((select count(*) from public.jobs) >= 0 and public.my_member_id(:'company_a') = :'ines', 'Inès est reconnue comme membre de A');
+select pg_temp.fails(format($$select public.claim_invite(%L)$$, :'lien'), 'Le lien ne sert qu''une fois');
+reset role;
+
+-- ===== Lot 7 : abonnement, limites, pilotes =====
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select pg_temp.check(public.company_access(:'company_a') = 'essai', 'Une nouvelle entreprise est en essai');
+select pg_temp.check((select trial_ends_at::date from public.companies where id = :'company_a') = (now() + interval '14 days')::date, 'L''essai dure 14 jours');
+select pg_temp.fails(format($$update public.companies set subscription_status = 'active' where id = %L$$, :'company_a'), 'Le gérant ne peut pas s''activer un abonnement lui-même');
+update public.companies set phone = '0493000000' where id = :'company_a';
+select pg_temp.check((select phone from public.companies where id = :'company_a') = '0493000000', 'Le gérant modifie encore les coordonnées de son entreprise');
+select pg_temp.fails(format($$select public.billing_update('mauvais', %L, p_status => 'active')$$, :'company_a'), 'Sans le secret, impossible de changer l''abonnement');
+reset role;
+insert into private.settings values ('stripe_webhook_secret', 'whsec_test');
+update public.companies set trial_ends_at = now() - interval '1 day' where id = :'company_a';
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select pg_temp.check(public.company_access(:'company_a') = 'expire', 'Après l''essai, l''accès expire');
+select pg_temp.fails(format($$insert into public.members (company_id, first_name, role) select %L, 'Agent ' || g, 'agent' from generate_series(1, 5) g$$, :'company_a'),
+  'Offre Starter : pas plus de 5 salariés');
+select public.billing_update('whsec_test', :'company_a', 'cus_123', 'sub_123', 'active', 'pro', 'year', now() + interval '1 year', false);
+select pg_temp.check(public.company_access(:'company_a') = 'actif', 'Après paiement (secret correct), l''abonnement est actif');
+select pg_temp.check((select plan || '/' || billing_interval from public.companies where id = :'company_a') = 'pro/year', 'Offre Pro annuelle enregistrée');
+reset role;
+insert into public.pilot_codes (code, uses_left, pilot_days) values ('PILOTE-TEST', 1, 90);
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);
+set role authenticated;
+select pg_temp.check((select count(*) from public.pilot_codes) = 0, 'Les codes pilotes ne sont pas lisibles');
+select pg_temp.fails($$select public.redeem_pilot_code('INCONNU')$$, 'Un code inconnu est refusé');
+select pg_temp.check(public.redeem_pilot_code('pilote-test') > now() + interval '89 days', 'Paul devient pilote pour 90 jours');
+select pg_temp.check(public.company_access(:'company_b') = 'pilote', 'Une entreprise pilote a accès gratuitement');
+reset role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select pg_temp.fails($$select public.redeem_pilot_code('PILOTE-TEST')$$, 'Le code ne sert pas plus que prévu');
+select pg_temp.check(public.company_access(:'company_b') is null, 'Marc ne voit pas l''état de l''entreprise de Paul');
+reset role;
+
 -- ===== Effacement complet d'une entreprise (RGPD) =====
 reset role;
 delete from public.companies where id = :'company_a';
