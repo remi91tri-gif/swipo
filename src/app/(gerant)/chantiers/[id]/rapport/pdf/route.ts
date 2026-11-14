@@ -17,8 +17,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     return await buildPdf(req, ctx);
   } catch (e) {
     console.error("rapport PDF", e);
-    const err = e as Error;
-    return new Response(`Le PDF n'a pas pu être créé. [${err?.name}] ${err?.message}\n${err?.stack?.split("\n").slice(0, 6).join("\n")}`, { status: 500 });
+    return new Response("Le PDF n'a pas pu être créé.", { status: 500 });
   }
 }
 
