@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CreditCard, KeyRound, Store, UserRound } from "lucide-react";
+import { CreditCard, KeyRound, Store, Trash2, UserRound } from "lucide-react";
+import { DeleteCompany } from "@/components/delete-account";
 import type { ReactNode } from "react";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { Card, CardTitle, PageHeader } from "@/components/ui";
@@ -17,11 +18,11 @@ function date(iso: string | null) {
   return iso ? new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" }).format(new Date(iso)) : "";
 }
 
-function Section({ icon, title, lead, children }: { icon: ReactNode; title: string; lead?: string; children: ReactNode }) {
+function Section({ icon, title, lead, danger, children }: { icon: ReactNode; title: string; lead?: string; danger?: boolean; children: ReactNode }) {
   return (
-    <Card className="flex flex-col gap-5 p-7">
+    <Card className="flex flex-col gap-5 p-5 sm:p-7">
       <div className="flex items-start gap-3.5">
-        <span className="flex size-10 flex-none items-center justify-center rounded-full bg-azur-subtle text-azur">{icon}</span>
+        <span className={`flex size-10 flex-none items-center justify-center rounded-full ${danger ? "bg-critique-soft text-critique" : "bg-azur-subtle text-azur"}`}>{icon}</span>
         <div>
           <CardTitle>{title}</CardTitle>
           {lead && <p className="text-sm text-ink-muted">{lead}</p>}
@@ -94,6 +95,12 @@ export default async function ParametresPage() {
               <Link href="/abonnement" className="text-sm font-semibold text-azur hover:underline">Voir les offres</Link>
             </>
           )}
+        </Section>
+      )}
+
+      {isManager && (
+        <Section danger icon={<Trash2 aria-hidden size={19} />} title="Supprimer mon compte">
+          <DeleteCompany companyName={company.name} paying={billing.access === "actif"} />
         </Section>
       )}
     </>

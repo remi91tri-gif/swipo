@@ -347,6 +347,27 @@ select pg_temp.check(public.is_my_avatar_path(:'company_a' || '/' || :'karim' ||
   'Karim ne dépose que dans son propre dossier');
 reset role;
 
+-- ===== Suppression de compte =====
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000c1', 'zoe@nettoie.test');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000c1', false);
+set role authenticated;
+select public.create_company('Nettoie Tout', 'Zoé') as company_c \gset
+select pg_temp.fails($$select public.delete_my_company('Autre nom')$$, 'Suppression refusée si le nom saisi est faux');
+select public.delete_my_company('nettoie tout');
+reset role;
+select pg_temp.check(not exists (select 1 from public.companies where id = :'company_c'), 'Zoé supprime son entreprise (même sans paiement)');
+select pg_temp.check(not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000c1'), 'Son compte de connexion est supprimé aussi');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a9', false);
+set role authenticated;
+select public.delete_my_account();
+reset role;
+select pg_temp.check(not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000a9')
+  and (select user_id is null and not active from public.members where id = :'ines'), 'Inès (agent) supprime son compte, sa fiche est désactivée');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select pg_temp.fails($$select public.delete_my_account()$$, 'Un gérant passe par la suppression de l''entreprise');
+reset role;
+
 -- ===== Effacement complet d'une entreprise (RGPD) =====
 reset role;
 delete from public.companies where id = :'company_a';

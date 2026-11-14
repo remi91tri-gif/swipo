@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { signOut } from "@/app/auth-actions";
 import { AvatarUpload } from "@/components/avatar-upload";
+import { DeleteMyAccount } from "@/components/delete-account";
 import { AgentSignOut } from "@/components/offline-agent";
 import { ThemeButton } from "@/components/theme-toggle";
 import { getAgentSession } from "@/lib/data";
@@ -45,6 +46,11 @@ export default async function AgentProfilePage() {
           </span>
           <AgentSignOut action={signOut} />
         </section>
+        {member.role !== "gerant" && (
+          <section className="flex flex-col gap-2 rounded-2xl border border-line bg-surface-raised p-5">
+            <DeleteMyAccount />
+          </section>
+        )}
       </main>
     </>
   );
