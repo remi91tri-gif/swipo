@@ -20,9 +20,10 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Vérifie le jeton localement (clé publique du projet) : pas d'appel réseau à chaque page.
+  // Si le jeton a expiré, il est rafraîchi et les nouveaux cookies sont posés.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
 

@@ -26,6 +26,7 @@ export type AgentMissionDetail = {
   startedAt: string | null;
   finishedAt: string | null;
   openIncident: { category: string; decision: string | null; message: string | null } | null;
+  reworkReason: string | null;
 };
 
 /** Liens temporaires (1 h) vers des photos privées. */
@@ -57,13 +58,14 @@ export async function getAgentMission(session: Session, id: string): Promise<Age
       startedAt: null,
       finishedAt: null,
       openIncident: null,
+      reworkReason: null,
     };
   }
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("jobs")
     .select(
-      "id, company_id, title, status, scheduled_date, start_time, instructions, photos_after_required, started_at, finished_at, sites(address, access_info, onsite_contact), checklist_items(id, label, done, position), job_assignments(member_id), photos(id, kind, storage_path, taken_at), incidents(category, urgency, decision, manager_message, reported_at)",
+      "id, company_id, title, status, scheduled_date, start_time, instructions, photos_after_required, started_at, finished_at, sites(address, access_info, onsite_contact), checklist_items(id, label, done, position), job_assignments(member_id), photos(id, kind, storage_path, taken_at), incidents(category, urgency, decision, manager_message, reported_at), job_events(type, at, data)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -86,12 +88,15 @@ export async function getAgentMission(session: Session, id: string): Promise<Age
     job_assignments: { member_id: string }[];
     photos: { id: string; kind: PhotoKind; storage_path: string; taken_at: string }[];
     incidents: { category: string; urgency: string; decision: string | null; manager_message: string | null; reported_at: string }[];
+    job_events: { type: string; at: string; data: Record<string, unknown> }[];
   };
   const r = data as unknown as Row;
-  const { data: people } = await supabase.from("members").select("id, first_name").eq("company_id", r.company_id);
-  const names = new Map((people ?? []).map((p) => [p.id as string, p.first_name as string]));
   const photos = [...r.photos].sort((a, b) => a.taken_at.localeCompare(b.taken_at));
-  const urls = await signedPhotoUrls(photos.map((p) => p.storage_path));
+  const [{ data: people }, urls] = await Promise.all([
+    supabase.from("members").select("id, first_name").eq("company_id", r.company_id),
+    signedPhotoUrls(photos.map((p) => p.storage_path)),
+  ]);
+  const names = new Map((people ?? []).map((p) => [p.id as string, p.first_name as string]));
   const lastIncident = [...r.incidents].filter((i) => i.urgency === "bloquant").sort((a, b) => b.reported_at.localeCompare(a.reported_at))[0];
 
   return {
@@ -113,5 +118,9 @@ export async function getAgentMission(session: Session, id: string): Promise<Age
     startedAt: r.started_at,
     finishedAt: r.finished_at,
     openIncident: lastIncident ? { category: lastIncident.category, decision: lastIncident.decision, message: lastIncident.manager_message } : null,
+    reworkReason: (() => {
+      const e = [...r.job_events].filter((x) => x.type === "reprise_demandee").sort((a, b) => b.at.localeCompare(a.at))[0];
+      return e && typeof e.data?.motif === "string" ? e.data.motif : null;
+    })(),
   };
 }

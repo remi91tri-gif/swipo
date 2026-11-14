@@ -6,6 +6,8 @@ import { Avatar, Card, CardTitle, StatusPill } from "@/components/ui";
 import { requireSession } from "@/lib/data";
 import { getJob } from "@/lib/data-jobs";
 import { clockTime, displayPhone, durationLabel, eventLabel, longDate, timeLabel } from "@/lib/format";
+import { JobActions } from "./job-actions";
+import { DECISION_LABEL } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Fiche chantier" };
 
@@ -43,6 +45,8 @@ export default async function JobPage({ params, searchParams }: { params: Promis
           {job.services.length ? ` · ${job.services.join(", ")}` : ""}
         </p>
       </div>
+
+      <JobActions job={job} />
 
       <div className="flex flex-wrap items-start gap-6">
         <div className="flex min-w-0 flex-[999_1_520px] flex-col gap-6">
@@ -121,6 +125,26 @@ export default async function JobPage({ params, searchParams }: { params: Promis
             ))}
             <p className="text-sm text-ink-muted">{job.photosRequired ? "Photos avant et après demandées." : "Photos facultatives."}</p>
           </Card>
+
+          {job.incidents.length > 0 && (
+            <Card className="flex flex-col gap-4 p-6">
+              <CardTitle>Imprévus</CardTitle>
+              {job.incidents.map((i) => (
+                <div key={i.id} className="flex flex-col gap-1 border-t border-hairline pt-3 first:border-t-0 first:pt-0">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-semibold">{i.urgency === "bloquant" ? "Bloquant" : "Pour information"}</span>
+                    <span className="text-[13px] text-ink-muted tabular-nums">{clockTime(i.reportedAt)}</span>
+                  </span>
+                  {i.comment && <span className="text-ink-muted">« {i.comment} »</span>}
+                  {i.decision ? (
+                    <span className="text-sm">Décision : <span className="font-semibold">{DECISION_LABEL[i.decision]}</span>{i.managerMessage ? ` · « ${i.managerMessage} »` : ""}</span>
+                  ) : (
+                    i.urgency === "bloquant" && <span className="text-sm font-semibold text-critique">En attente de votre décision</span>
+                  )}
+                </div>
+              ))}
+            </Card>
+          )}
 
           <Card className="flex flex-col gap-4 p-6">
             <CardTitle>Chronologie</CardTitle>

@@ -114,7 +114,24 @@ export type JobDetail = JobListItem & {
   events: JobEvent[];
   leadId: string | null;
   finishComment: string | null;
-  photos: { id: string; kind: "avant" | "apres" | "probleme" | "reference" | "autre"; url: string | null }[];
+  photos: { id: string; kind: "avant" | "apres" | "probleme" | "reference" | "autre"; url: string | null; incidentId: string | null }[];
+  incidents: JobIncident[];
+  finishedAt: string | null;
+  reworkReason: string | null;
+};
+
+export type IncidentDecision = "continuer" | "attendre" | "reprogrammer" | "ne_pas_effectuer";
+
+export type JobIncident = {
+  id: string;
+  category: string;
+  urgency: "bloquant" | "information";
+  comment: string | null;
+  reportedBy: string | null;
+  reportedAt: string;
+  decision: IncidentDecision | null;
+  managerMessage: string | null;
+  decidedAt: string | null;
 };
 
 export type PlanningDay = {

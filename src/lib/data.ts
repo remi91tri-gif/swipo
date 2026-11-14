@@ -58,14 +58,18 @@ function timeOf(iso: string | null) {
 export const getSession = cache(async (): Promise<Session | null> => {
   if (isDemo) return demoSession;
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (!user) {
-    if (userError && userError.name !== "AuthSessionMissingError") console.error("getSession: utilisateur illisible", userError.name, userError.message);
+  // Jeton vérifié localement avec la clé publique du projet (pas d'appel réseau).
+  const { data: auth, error: authError } = await supabase.auth.getClaims();
+  const claims = auth?.claims;
+  if (!claims?.sub) {
+    if (authError && authError.name !== "AuthSessionMissingError") console.error("getSession: session illisible", authError.name, authError.message);
     return null;
   }
+  const user = {
+    id: claims.sub,
+    phone: (claims.phone as string | undefined) || null,
+    user_metadata: (claims.user_metadata ?? {}) as Record<string, unknown>,
+  };
 
   const load = () =>
     supabase

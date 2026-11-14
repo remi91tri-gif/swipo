@@ -1,4 +1,4 @@
-import type { JobStatus, MemberRole } from "./types";
+import type { IncidentDecision, JobStatus, MemberRole } from "./types";
 
 export const STATUS: Record<JobStatus, { label: string; tone: "neutral" | "azur" | "critique" | "reprise" | "valide" | "soleil" | "outline" }> = {
   a_planifier: { label: "À planifier", tone: "soleil" },
@@ -115,3 +115,11 @@ export function eventLabel(type: string, actor: string | null) {
 export function clockTime(iso: string) {
   return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(iso));
 }
+
+/** Décision du gérant sur un imprévu. */
+export const DECISION_LABEL: Record<IncidentDecision, string> = {
+  continuer: "Continuer",
+  attendre: "Attendre",
+  reprogrammer: "Reprogrammer",
+  ne_pas_effectuer: "Ne pas effectuer",
+};

@@ -90,6 +90,20 @@ export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
 
         {error && <p role="alert" className="rounded-lg bg-critique-soft px-4 py-3 font-semibold text-critique">{error}</p>}
 
+        {mission.status === "a_reprendre" && mission.reworkReason && (
+          <section className="flex flex-col gap-1.5 rounded-xl bg-reprise-soft p-4">
+            <p className="font-semibold text-reprise">Reprise demandée</p>
+            <p className="text-ink">« {mission.reworkReason} »</p>
+          </section>
+        )}
+
+        {(working || blocked) && mission.openIncident?.decision && !blocked && (
+          <section className="flex flex-col gap-1 rounded-xl bg-azur-subtle p-4">
+            <p className="font-semibold text-azur">Réponse de votre gérant : {DECISION[mission.openIncident.decision]}</p>
+            {mission.openIncident.message && <p className="text-ink">« {mission.openIncident.message} »</p>}
+          </section>
+        )}
+
         {blocked && (
           <section className="flex flex-col gap-1.5 rounded-xl bg-critique-soft p-4">
             <p className="flex items-center gap-2 font-semibold text-critique"><AlertCircle aria-hidden size={18} /> Problème signalé</p>

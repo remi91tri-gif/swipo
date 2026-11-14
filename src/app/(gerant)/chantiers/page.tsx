@@ -5,6 +5,7 @@ import { JobRow } from "@/components/job-row";
 import { Card, LinkButton, PageHeader } from "@/components/ui";
 import { requireSession } from "@/lib/data";
 import { JOB_TABS, getJobs, type JobTab } from "@/lib/data-jobs";
+import { ValidateAll } from "./[id]/job-actions";
 
 export const metadata: Metadata = { title: "Chantiers" };
 
@@ -43,6 +44,7 @@ export default async function ChantiersPage({ searchParams }: { searchParams: Pr
           </Link>
         ))}
       </nav>
+      {tab === "a-verifier" && <ValidateAll ids={jobs.map((j) => j.id)} />}
       <Card className="overflow-hidden">
         {jobs.length === 0 ? (
           <div className="flex flex-col items-start gap-4 px-7 py-8">

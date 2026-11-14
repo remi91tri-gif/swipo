@@ -3,7 +3,7 @@ import { isDemo } from "./env";
 import { demoMembers } from "./demo";
 import { createClient } from "./supabase/server";
 import { signedPhotoUrls } from "./data-agent";
-import type { Client, JobDetail, JobListItem, JobStatus, Member, PlanningDay, Session, Site } from "./types";
+import type { Client, JobDetail, JobIncident, JobListItem, JobStatus, Member, PlanningDay, Session, Site } from "./types";
 
 // ---------------------------------------------------------------------------
 // Outils
@@ -188,20 +188,27 @@ export async function getJob(session: Session, id: string): Promise<JobDetail | 
       leadId: base.team[0]?.id ?? null,
       finishComment: base.status === "termine" ? "Calcaire tenace en bas de la vitrine côté quai." : null,
       photos: [],
+      incidents:
+        base.status === "a_traiter"
+          ? [{ id: "i1", category: "acces_impossible", urgency: "bloquant", comment: "Portail fermé, personne ne répond à l'interphone. J'attends devant.", reportedBy: base.team[0]?.firstName ?? null, reportedAt: new Date().toISOString(), decision: null, managerMessage: null, decidedAt: null }]
+          : [],
+      finishedAt: base.status === "termine" ? new Date().toISOString() : null,
+      reworkReason: null,
     };
   }
   const supabase = await createClient();
+  const peoplePromise = peopleMap(supabase, session.company.id);
   const { data, error } = await supabase
     .from("jobs")
     .select(
-      "id, client_id, title, scheduled_date, start_time, duration_min, status, instructions, photos_after_required, finish_comment, clients(name, phone), sites(address, access_info, onsite_contact), job_assignments(member_id, is_lead), checklist_items(id, label, done, position), job_services(label), job_events(at, type, actor_id, data), photos(id, kind, storage_path, taken_at)",
+      "id, client_id, title, scheduled_date, start_time, duration_min, status, instructions, photos_after_required, finish_comment, clients(name, phone), sites(address, access_info, onsite_contact), job_assignments(member_id, is_lead), checklist_items(id, label, done, position), job_services(label), job_events(at, type, actor_id, data), photos(id, kind, storage_path, taken_at, incident_id), incidents(id, category, urgency, comment, reported_by, reported_at, decision, manager_message, decided_at), finished_at",
     )
     .eq("company_id", session.company.id)
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  const people = await peopleMap(supabase, session.company.id);
+  const people = await peoplePromise;
   type Row = Omit<JobListRow, "job_assignments" | "clients" | "sites"> & {
     client_id: string;
     instructions: string | null;
@@ -213,7 +220,9 @@ export async function getJob(session: Session, id: string): Promise<JobDetail | 
     checklist_items: { id: string; label: string; done: boolean; position: number }[];
     job_services: { label: string }[];
     job_events: { at: string; type: string; actor_id: string | null; data: Record<string, unknown> }[];
-    photos: { id: string; kind: JobDetail["photos"][number]["kind"]; storage_path: string; taken_at: string }[];
+    photos: { id: string; kind: JobDetail["photos"][number]["kind"]; storage_path: string; taken_at: string; incident_id: string | null }[];
+    incidents: { id: string; category: string; urgency: JobIncident["urgency"]; comment: string | null; reported_by: string; reported_at: string; decision: JobIncident["decision"]; manager_message: string | null; decided_at: string | null }[];
+    finished_at: string | null;
   };
   const r = data as unknown as Row;
   const photos = [...r.photos].sort((a, b) => a.taken_at.localeCompare(b.taken_at));
@@ -234,8 +243,29 @@ export async function getJob(session: Session, id: string): Promise<JobDetail | 
       .map((e) => ({ at: e.at, type: e.type, actor: e.actor_id ? (people.get(e.actor_id)?.firstName ?? null) : null, data: e.data })),
     leadId: r.job_assignments.find((a) => a.is_lead)?.member_id ?? null,
     finishComment: r.finish_comment,
-    photos: photos.map((ph) => ({ id: ph.id, kind: ph.kind, url: urls.get(ph.storage_path) ?? null })),
+    photos: photos.map((ph) => ({ id: ph.id, kind: ph.kind, url: urls.get(ph.storage_path) ?? null, incidentId: ph.incident_id })),
+    incidents: [...r.incidents]
+      .sort((a, b) => b.reported_at.localeCompare(a.reported_at))
+      .map((i) => ({
+        id: i.id,
+        category: i.category,
+        urgency: i.urgency,
+        comment: i.comment,
+        reportedBy: people.get(i.reported_by)?.firstName ?? null,
+        reportedAt: i.reported_at,
+        decision: i.decision,
+        managerMessage: i.manager_message,
+        decidedAt: i.decided_at,
+      })),
+    finishedAt: r.finished_at,
+    reworkReason: lastRework(r.job_events),
   };
+}
+
+/** Motif de la dernière demande de reprise, s'il y en a une. */
+function lastRework(events: { at: string; type: string; data: Record<string, unknown> }[]) {
+  const e = [...events].filter((x) => x.type === "reprise_demandee").sort((a, b) => b.at.localeCompare(a.at))[0];
+  return e && typeof e.data?.motif === "string" ? e.data.motif : null;
 }
 
 // ---------------------------------------------------------------------------
