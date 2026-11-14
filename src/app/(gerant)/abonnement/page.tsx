@@ -37,6 +37,8 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
   }
 
   const b = session.billing;
+  // Accès offert sans fin (entreprise du fondateur, partenaires) : pilote jusqu'à une date très lointaine.
+  const forever = b.access === "pilote" && !!b.pilotUntil && new Date(b.pilotUntil).getFullYear() >= 2900;
   return (
     <>
       <PageHeader title="Abonnement" lead={session.company.name} />
@@ -59,7 +61,13 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
                 <p className="text-ink-muted">Jusqu&apos;au {date(b.trialEndsAt)}. Choisissez une offre pour continuer ensuite, sans perdre vos données.</p>
               </>
             )}
-            {b.access === "pilote" && (
+            {forever && (
+              <>
+                <p className="font-display text-xl font-semibold">Accès offert en permanence</p>
+                <p className="text-ink-muted">Swipo est gratuit pour votre entreprise, sans limite de durée ni d&apos;équipe. Rien à payer, rien à résilier.</p>
+              </>
+            )}
+            {b.access === "pilote" && !forever && (
               <>
                 <p className="font-display text-xl font-semibold">Entreprise pilote : Swipo est gratuit</p>
                 <p className="text-ink-muted">Jusqu&apos;au {date(b.pilotUntil)}. Ensuite, -50 % à vie sur l&apos;offre de votre choix. Merci pour vos retours !</p>
@@ -90,7 +98,7 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
         {b.hasCustomer && stripeEnabled && <PortalButton label={b.access === "actif" ? "Gérer mon abonnement" : "Mes factures"} />}
       </Card>
 
-      {!stripeEnabled ? (
+      {forever ? null : !stripeEnabled ? (
         <p className="rounded-lg bg-soleil-soft px-5 py-4 text-soleil-ink">Le paiement en ligne sera bientôt disponible.</p>
       ) : (
         <section className="flex flex-col gap-4">
@@ -99,7 +107,7 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
         </section>
       )}
 
-      {!b.pilotDiscount && b.access !== "actif" && (
+      {!b.pilotDiscount && b.access !== "actif" && !forever && (
         <Card className="flex flex-col gap-3 p-7">
           <CardTitle>Vous participez au programme pilote ?</CardTitle>
           <p className="text-ink-muted">Saisissez le code reçu de Swipo : l&apos;accès est gratuit pendant le pilote, puis -50 % à vie.</p>

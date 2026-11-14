@@ -85,7 +85,9 @@ export default async function ParametresPage() {
               <p className="text-ink-muted">
                 {billing.access === "essai"
                   ? `Essai gratuit jusqu'au ${date(billing.trialEndsAt)} : rien à résilier, aucun prélèvement n'a lieu sans votre accord.`
-                  : billing.access === "pilote"
+                  : billing.access === "pilote" && billing.pilotUntil && new Date(billing.pilotUntil).getFullYear() >= 2900
+                    ? "Accès offert en permanence : rien à payer, rien à résilier."
+                    : billing.access === "pilote"
                     ? `Entreprise pilote : Swipo est gratuit jusqu'au ${date(billing.pilotUntil)}.`
                     : "Aucun abonnement en cours."}
               </p>
