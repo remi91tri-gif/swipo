@@ -1,12 +1,30 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePending } from "@/lib/use-pending";
+import { useHydrated } from "@/lib/use-hydrated";
 import { AlertCircle } from "lucide-react";
 import { Avatar, Button, Card, FormError } from "@/components/ui";
 import { CLIENT_TYPE_LABEL, ROLE_LABEL } from "@/lib/format";
 import { TRADE_PRESETS, tradePreset } from "@/lib/trades";
 import type { Client, MemberRole } from "@/lib/types";
-import { checkConflicts, createJobAction } from "../actions";
+import { checkConflicts, createJobAction, updateJobAction } from "../actions";
+
+/** Valeurs d'un chantier existant, pour le modifier avec le même formulaire. */
+export type JobInitial = {
+  jobId: string;
+  clientId: string;
+  siteId: string | null;
+  trade: string;
+  title: string;
+  date: string | null;
+  time: string | null;
+  duration: number | null;
+  instructions: string | null;
+  photos: boolean;
+  checklist: string[];
+  members: string[];
+};
 
 type Person = { id: string; firstName: string; lastName: string; role: MemberRole; avatarUrl?: string | null };
 
@@ -30,19 +48,35 @@ function Switch({ name, checked, onChange, title, sub }: { name: string; checked
   );
 }
 
-export function NewJobForm({ clients, people, defaultClient, defaultDate }: { clients: Client[]; people: Person[]; defaultClient: string; defaultDate: string }) {
-  const [state, action, pending] = useActionState(createJobAction, undefined);
+export function NewJobForm({
+  clients,
+  people,
+  defaultClient,
+  defaultDate,
+  initial,
+}: {
+  clients: Client[];
+  people: Person[];
+  defaultClient: string;
+  defaultDate: string;
+  initial?: JobInitial;
+}) {
+  const [state, setState] = useState<{ error?: string }>();
+  const [pending, run] = usePending();
+  const ready = useHydrated();
 
-  const [clientId, setClientId] = useState(defaultClient || (clients.length ? clients[0].id : "new"));
+  const [clientId, setClientId] = useState(initial?.clientId ?? (defaultClient || (clients.length ? clients[0].id : "new")));
   const client = clients.find((c) => c.id === clientId);
-  const [siteId, setSiteId] = useState(client?.sites[0]?.id ?? "new");
-  useEffect(() => setSiteId(client?.sites[0]?.id ?? "new"), [client]);
+  const [siteId, setSiteId] = useState(initial?.siteId ?? client?.sites[0]?.id ?? "new");
+  // Changement de client : on garde l'adresse si elle est à lui, sinon on prend sa première.
+  useEffect(() => setSiteId((cur) => (client?.sites.some((x) => x.id === cur) ? cur : (client?.sites[0]?.id ?? "new"))), [client]);
 
-  const [trade, setTrade] = useState<string>(TRADE_PRESETS[0].id);
-  const preset = tradePreset(trade);
-  const [title, setTitle] = useState<string>(preset.title);
-  const [duration, setDuration] = useState<number>(preset.duration);
-  const [checklist, setChecklist] = useState<string>(preset.checklist.join("\n"));
+  const initialPreset = initial ? TRADE_PRESETS.find((t) => t.label === initial.trade)?.id ?? "" : TRADE_PRESETS[0].id;
+  const [trade, setTrade] = useState<string>(initialPreset);
+  const preset = tradePreset(trade || TRADE_PRESETS[0].id);
+  const [title, setTitle] = useState<string>(initial?.title ?? preset.title);
+  const [duration, setDuration] = useState<number>(initial?.duration ?? preset.duration);
+  const [checklist, setChecklist] = useState<string>(initial ? initial.checklist.join("\n") : preset.checklist.join("\n"));
   function pickTrade(id: string) {
     const p = tradePreset(id);
     setTrade(id);
@@ -51,11 +85,11 @@ export function NewJobForm({ clients, people, defaultClient, defaultDate }: { cl
     setChecklist(p.checklist.join("\n"));
   }
 
-  const [date, setDate] = useState(defaultDate);
-  const [time, setTime] = useState("08:00");
-  const [members, setMembers] = useState<string[]>([]);
-  const [photos, setPhotos] = useState(true);
-  const [checklistOn, setChecklistOn] = useState(true);
+  const [date, setDate] = useState(initial ? (initial.date ?? "") : defaultDate);
+  const [time, setTime] = useState(initial ? (initial.time?.slice(0, 5) ?? "") : "08:00");
+  const [members, setMembers] = useState<string[]>(initial?.members ?? []);
+  const [photos, setPhotos] = useState(initial?.photos ?? true);
+  const [checklistOn, setChecklistOn] = useState(initial ? initial.checklist.length > 0 : true);
 
   const [conflicts, setConflicts] = useState<{ member: string; job: string; slot: string }[]>([]);
   const memberKey = members.join(",");
@@ -76,7 +110,19 @@ export function NewJobForm({ clients, people, defaultClient, defaultDate }: { cl
 
   return (
     <Card>
-      <form action={action}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          void run(async () => {
+            setState(undefined);
+            const res = await (initial ? updateJobAction : createJobAction)(undefined, fd);
+            if (res?.url) window.location.assign(res.url);
+            else setState({ error: res?.error ?? "Réessayez dans un instant." });
+          });
+        }}
+      >
+        {initial && <input type="hidden" name="job_id" value={initial.jobId} />}
         {state?.error && (
           <div className="px-7 pt-6">
             <FormError message={state.error} />
@@ -155,7 +201,7 @@ export function NewJobForm({ clients, people, defaultClient, defaultDate }: { cl
                 </button>
               ))}
             </div>
-            <input type="hidden" name="trade_label" value={preset.label} />
+            <input type="hidden" name="trade_label" value={trade ? preset.label : (initial?.trade ?? preset.label)} />
           </fieldset>
           <div>
             <label htmlFor="title" className={label}>Intitulé</label>
@@ -220,7 +266,7 @@ export function NewJobForm({ clients, people, defaultClient, defaultDate }: { cl
           <p className={eyebrow}>POUR L&apos;ÉQUIPE</p>
           <div>
             <label htmlFor="instructions" className={label}>Consignes</label>
-            <textarea id="instructions" name="instructions" rows={3} className="w-full rounded-lg border border-line-strong bg-surface-raised px-4 py-3.5 text-[15px] text-ink" placeholder="Accès, clés, points d'attention, produits à éviter…" />
+            <textarea id="instructions" name="instructions" rows={3} defaultValue={initial?.instructions ?? ""} className="w-full rounded-lg border border-line-strong bg-surface-raised px-4 py-3.5 text-[15px] text-ink" placeholder="Accès, clés, points d'attention, produits à éviter…" />
           </div>
           <Switch name="photos_on" checked={photos} onChange={setPhotos} title="Photos avant et après" sub="Demandées au démarrage et à la fin" />
           <Switch name="checklist_on" checked={checklistOn} onChange={setChecklistOn} title="Checklist" sub={checklistOn ? "Une tâche par ligne, modifiable" : "Désactivée pour ce chantier"} />
@@ -230,8 +276,8 @@ export function NewJobForm({ clients, people, defaultClient, defaultDate }: { cl
         </div>
 
         <div className="flex flex-wrap justify-end gap-2.5 border-t border-hairline px-7 py-5">
-          <Button type="submit" disabled={pending} className="h-12 px-6 text-base">
-            {pending ? "Création…" : "Créer le chantier"}
+          <Button type="submit" disabled={pending || !ready} className="h-12 px-6 text-base">
+            {initial ? (pending ? "Enregistrement…" : "Enregistrer les modifications") : pending ? "Création…" : "Créer le chantier"}
           </Button>
         </div>
       </form>

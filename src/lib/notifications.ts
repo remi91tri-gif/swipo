@@ -63,9 +63,14 @@ export function describe(n: Notif, role: Role) {
     imprevu_info: { title: "Imprévu signalé", body: place, tone: "soleil" },
     decision_gerant: { title: "Réponse de votre gérant", body: job, tone: "azur" },
     reprise_demandee: { title: "Reprise demandée", body: job, tone: "reprise" },
+    mission_modifiee: { title: "Mission modifiée", body: [job, when(n.job?.date ?? null, n.job?.time ?? null)].filter(Boolean).join(" · "), tone: "soleil" },
+    mission_retiree: { title: "Mission retirée", body: "Vous n'êtes plus affecté à un chantier", tone: "reprise" },
+    mission_annulee: { title: "Mission annulée", body: job, tone: "critique" },
     chantier_en_retard: { title: "Chantier non démarré", body: `${place} devait commencer il y a plus de 30 min`, tone: "soleil" },
   };
-  return { ...(t[n.type] ?? { title: "Notification", body: job, tone: "azur" as const }), href };
+  // Mission retirée ou annulée : l'agent ne voit plus la fiche, on le ramène à sa journée.
+  const gone = n.type === "mission_retiree" || n.type === "mission_annulee";
+  return { ...(t[n.type] ?? { title: "Notification", body: job, tone: "azur" as const }), href: gone && role === "agent" ? "/agent" : href };
 }
 
 export function timeAgo(iso: string) {

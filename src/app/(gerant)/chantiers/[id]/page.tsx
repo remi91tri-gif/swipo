@@ -6,14 +6,14 @@ import { Avatar, Card, CardTitle, LinkButton, StatusPill } from "@/components/ui
 import { requireSession } from "@/lib/data";
 import { getJob } from "@/lib/data-jobs";
 import { clockTime, displayPhone, durationLabel, eventLabel, longDate, timeLabel } from "@/lib/format";
-import { JobActions } from "./job-actions";
-import { DECISION_LABEL } from "@/lib/format";
+import { JobActions, JobManage } from "./job-actions";
+import { CANCELLABLE_STATUSES, DECISION_LABEL, EDITABLE_STATUSES } from "@/lib/format";
 import { hasClientReport } from "@/lib/billing/plans";
 
 export const metadata: Metadata = { title: "Fiche chantier" };
 
-export default async function JobPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ cree?: string }> }) {
-  const [{ id }, { cree }] = await Promise.all([params, searchParams]);
+export default async function JobPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ cree?: string; modifie?: string }> }) {
+  const [{ id }, { cree, modifie }] = await Promise.all([params, searchParams]);
   const session = await requireSession();
   const job = await getJob(session, id);
   if (!job) notFound();
@@ -24,6 +24,12 @@ export default async function JobPage({ params, searchParams }: { params: Promis
       <Link href="/chantiers" className="inline-flex items-center gap-1.5 self-start text-sm font-semibold text-ink-muted hover:text-ink">
         <ChevronLeft aria-hidden size={16} /> Chantiers
       </Link>
+
+      {modifie && (
+        <p role="status" className="rounded-lg bg-valide-soft px-5 py-3.5 font-semibold text-valide">
+          Chantier modifié.{job.team.length ? " Les agents affectés sont prévenus." : ""}
+        </p>
+      )}
 
       {cree && (
         <p role="status" className="rounded-lg bg-valide-soft px-5 py-3.5 font-semibold text-valide">
@@ -40,6 +46,16 @@ export default async function JobPage({ params, searchParams }: { params: Promis
         <div className="flex flex-wrap items-center gap-3.5">
           <h1 className="font-display text-[34px] leading-[42px] font-semibold tracking-[-0.025em]">{job.title}</h1>
           <StatusPill status={job.status} />
+          {session.member.role === "gerant" && (
+            <span className="ml-auto">
+              <JobManage
+                jobId={job.id}
+                editable={EDITABLE_STATUSES.includes(job.status)}
+                cancellable={CANCELLABLE_STATUSES.includes(job.status)}
+                team={job.team.map((m) => m.firstName)}
+              />
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-base text-ink-muted">

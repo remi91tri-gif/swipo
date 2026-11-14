@@ -23,7 +23,7 @@ async function managerClient() {
 }
 
 function friendly(message: string) {
-  if (/Indiquez|Seul|Réservé|introuvable|terminé/i.test(message)) return message;
+  if (/Indiquez|Seul|Réservé|introuvable|terminé|annulé/i.test(message)) return message;
   return "L'action n'a pas abouti. Réessayez dans un instant.";
 }
 
@@ -54,6 +54,17 @@ export async function requestRework(jobId: string, reason: string, date: string,
   const supabase = await managerClient();
   if (!supabase) return { error: "Réservé au gérant." };
   const { error } = await supabase.rpc("request_rework", { p_job: jobId, p_reason: reason.trim(), p_date: date || null, p_time: time || null, p_members: null });
+  if (error) return { error: friendly(error.message) };
+  refresh(jobId);
+  return {};
+}
+
+/** Annule un chantier qui n'est pas encore terminé ; les agents affectés sont prévenus. */
+export async function cancelJob(jobId: string): Promise<Result> {
+  if (isDemo) return DEMO;
+  const supabase = await managerClient();
+  if (!supabase) return { error: "Réservé au gérant." };
+  const { error } = await supabase.rpc("cancel_job", { p_job: jobId });
   if (error) return { error: friendly(error.message) };
   refresh(jobId);
   return {};

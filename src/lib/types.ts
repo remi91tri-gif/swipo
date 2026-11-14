@@ -122,6 +122,8 @@ export type JobEvent = { at: string; type: string; actor: string | null; data: R
 
 export type JobDetail = JobListItem & {
   clientId: string;
+  siteId?: string | null;
+  checklistRequired?: boolean;
   clientPhone: string | null;
   address: string;
   accessInfo: string | null;

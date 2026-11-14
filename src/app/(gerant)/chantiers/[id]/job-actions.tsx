@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useHydrated } from "@/lib/use-hydrated";
-import { AlertCircle, Check, RotateCcw } from "lucide-react";
+import { AlertCircle, Check, Pencil, RotateCcw } from "lucide-react";
 import { Button, Card, FormError } from "@/components/ui";
 import type { IncidentDecision, JobDetail, JobIncident } from "@/lib/types";
-import { decideIncident, requestRework, validateJobs } from "./actions";
+import { cancelJob, decideIncident, requestRework, validateJobs } from "./actions";
 
 const CATEGORY: Record<string, string> = {
   acces_impossible: "Accès impossible",
@@ -196,6 +196,60 @@ export function ValidateAll({ ids }: { ids: string[] }) {
         <Check aria-hidden size={16} /> {pending ? "Validation…" : `Tout valider (${ids.length})`}
       </Button>
       {error && <FormError message={error} />}
+    </div>
+  );
+}
+
+/** « Modifier » et « Annuler le chantier », en haut de la fiche. */
+export function JobManage({ jobId, editable, cancellable, team }: { jobId: string; editable: boolean; cancellable: boolean; team: string[] }) {
+  const { pending, ready, error, run } = useAction();
+  const [confirming, setConfirming] = useState(false);
+  const [done, setDone] = useState(false);
+  if (!editable && !cancellable) return null;
+  return (
+    <div className="flex flex-wrap justify-end gap-2">
+      {editable && (
+        <a href={`/chantiers/${jobId}/modifier`} className="inline-flex h-11 items-center gap-2 rounded-md border border-line-strong bg-surface-raised px-[18px] font-semibold text-ink hover:bg-hairline">
+          <Pencil aria-hidden size={15} /> Modifier
+        </a>
+      )}
+      {cancellable && (
+        <button type="button" onClick={() => setConfirming(true)} className="h-11 rounded-md px-3 text-sm font-semibold text-critique hover:bg-critique-soft">
+          Annuler le chantier
+        </button>
+      )}
+      {confirming && (
+        <div role="dialog" aria-label="Annuler le chantier" className="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 px-4">
+          <div className="panel-in flex w-full max-w-[440px] flex-col gap-3 rounded-2xl bg-surface-raised p-6 text-left shadow-hero">
+            <p className="font-display text-xl font-semibold">Annuler ce chantier ?</p>
+            <p className="text-ink-muted">
+              {team.length ? `${team.join(" et ")} ${team.length > 1 ? "seront prévenus" : "sera prévenu"}. ` : ""}Le chantier restera dans l&apos;historique.
+            </p>
+            <FormError message={error} />
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => setConfirming(false)}>Garder le chantier</Button>
+              <button
+                type="button"
+                disabled={pending || !ready || done}
+                onClick={() =>
+                  run(async () => {
+                    const res = await cancelJob(jobId);
+                    // Rechargement complet : l'écran montre à coup sûr le chantier annulé.
+                    if (!res.error) {
+                      setDone(true);
+                      window.location.reload();
+                    }
+                    return res;
+                  })
+                }
+                className="h-11 rounded-md bg-critique px-[18px] font-semibold text-white disabled:opacity-60"
+              >
+                {pending || done ? "Annulation…" : "Confirmer l'annulation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

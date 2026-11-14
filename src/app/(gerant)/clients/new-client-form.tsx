@@ -1,15 +1,31 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState } from "react";
 import { Button, Field, FormError } from "@/components/ui";
 import { CLIENT_TYPE_LABEL } from "@/lib/format";
-import { createClientAction } from "./actions";
+import { usePending } from "@/lib/use-pending";
+import { useHydrated } from "@/lib/use-hydrated";
+import { createClientAction, type ClientFormState } from "./actions";
 
 export function NewClientForm() {
-  const [state, action, pending] = useActionState(createClientAction, undefined);
+  const [state, setState] = useState<ClientFormState>();
+  const [pending, run] = usePending();
+  const ready = useHydrated();
   const f = state?.fields ?? {};
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        void run(async () => {
+          const res = await createClientAction(undefined, fd);
+          // La fiche du client s'ouvre ici (une redirection depuis l'action pouvait bloquer le bouton).
+          if (res?.url) window.location.assign(res.url);
+          else setState(res);
+        });
+      }}
+    >
       <FormError message={state?.error} />
       <Field id="name" name="name" label="Nom" required defaultValue={f.name} placeholder="Mme Rossi, Boulangerie du Port…" />
       <div className="flex flex-col gap-2">
@@ -22,7 +38,7 @@ export function NewClientForm() {
       <Field id="email" name="email" type="email" label="E-mail (facultatif)" defaultValue={f.email} />
       <Field id="address" name="address" label="Adresse d'intervention" required defaultValue={f.address} autoComplete="street-address" />
       <Field id="access" name="access" label="Accès (facultatif)" placeholder="Code, clés, étage…" defaultValue={f.access} />
-      <Button type="submit" disabled={pending}>{pending ? "Enregistrement…" : "Ajouter le client"}</Button>
+      <Button type="submit" disabled={pending || !ready}>{pending ? "Enregistrement…" : "Ajouter le client"}</Button>
     </form>
   );
 }

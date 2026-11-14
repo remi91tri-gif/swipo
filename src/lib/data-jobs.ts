@@ -202,7 +202,7 @@ export async function getJob(session: Session, id: string): Promise<JobDetail | 
   const { data, error } = await supabase
     .from("jobs")
     .select(
-      "id, client_id, title, scheduled_date, start_time, duration_min, status, instructions, photos_after_required, finish_comment, clients(name, phone), sites(address, access_info, onsite_contact), job_assignments(member_id, is_lead), checklist_items(id, label, done, position), job_services(label), job_events(at, type, actor_id, data), photos(id, kind, storage_path, taken_at, incident_id), incidents(id, category, urgency, comment, reported_by, reported_at, decision, manager_message, decided_at), finished_at",
+      "id, client_id, site_id, title, scheduled_date, start_time, duration_min, status, instructions, photos_after_required, checklist_required, finish_comment, clients(name, phone), sites(address, access_info, onsite_contact), job_assignments(member_id, is_lead), checklist_items(id, label, done, position), job_services(label), job_events(at, type, actor_id, data), photos(id, kind, storage_path, taken_at, incident_id), incidents(id, category, urgency, comment, reported_by, reported_at, decision, manager_message, decided_at), finished_at",
     )
     .eq("company_id", session.company.id)
     .eq("id", id)
@@ -212,8 +212,10 @@ export async function getJob(session: Session, id: string): Promise<JobDetail | 
   const people = await peoplePromise;
   type Row = Omit<JobListRow, "job_assignments" | "clients" | "sites"> & {
     client_id: string;
+    site_id: string | null;
     instructions: string | null;
     photos_after_required: boolean;
+    checklist_required: boolean;
     finish_comment: string | null;
     clients: { name: string; phone: string | null } | null;
     sites: { address: string; access_info: string | null; onsite_contact: string | null } | null;
@@ -231,6 +233,8 @@ export async function getJob(session: Session, id: string): Promise<JobDetail | 
   return {
     ...toListItem(r, people),
     clientId: r.client_id,
+    siteId: r.site_id,
+    checklistRequired: r.checklist_required,
     clientPhone: r.clients?.phone ?? null,
     address: r.sites?.address ?? "",
     accessInfo: r.sites?.access_info ?? null,

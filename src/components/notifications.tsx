@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, Bell, BellRing, CheckCheck, CheckCircle2, Clock, RotateCcw, Sparkles, X } from "lucide-react";
+import { AlertCircle, Bell, BellRing, CalendarClock, CheckCheck, CheckCircle2, Clock, RotateCcw, Sparkles, X } from "lucide-react";
 import { watchActions, whenIdle } from "@/lib/when-idle";
 import { describe, dismissToast, markAllRead, markRead, startFeed, timeAgo, useNotifications, type Notif, type Role } from "@/lib/notifications";
 
@@ -23,6 +23,9 @@ const ICON: Record<string, typeof Bell> = {
   decision_gerant: BellRing,
   reprise_demandee: RotateCcw,
   chantier_en_retard: Clock,
+  mission_modifiee: CalendarClock,
+  mission_retiree: X,
+  mission_annulee: X,
 };
 
 function Row({ n, role, onOpen }: { n: Notif; role: Role; onOpen: () => void }) {

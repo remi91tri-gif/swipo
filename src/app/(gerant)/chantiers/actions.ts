@@ -1,19 +1,28 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { getSession } from "@/lib/data";
 import { getConflicts } from "@/lib/data-jobs";
 import { isDemo } from "@/lib/env";
 import { toE164 } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
-export type JobFormState = { error?: string } | undefined;
+export type JobFormState = { error?: string; url?: string } | undefined;
 
 const s = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
-export async function createJobAction(_: JobFormState, fd: FormData): Promise<JobFormState> {
+export async function createJobAction(prev: JobFormState, fd: FormData): Promise<JobFormState> {
+  return saveJob(prev, fd);
+}
+
+/** Même formulaire que la création, avec l'identifiant du chantier à modifier. */
+export async function updateJobAction(prev: JobFormState, fd: FormData): Promise<JobFormState> {
+  return saveJob(prev, fd);
+}
+
+async function saveJob(_: JobFormState, fd: FormData): Promise<JobFormState> {
+  const jobId = s(fd, "job_id");
   const session = await getSession();
-  if (!session || session.member.role !== "gerant") return { error: "Seul le gérant peut créer un chantier." };
+  if (!session || session.member.role !== "gerant") return { error: `Seul le gérant peut ${jobId ? "modifier" : "créer"} un chantier.` };
 
   const clientId = s(fd, "client_id");
   const siteId = s(fd, "site_id");
@@ -32,7 +41,8 @@ export async function createJobAction(_: JobFormState, fd: FormData): Promise<Jo
 
   const phone = s(fd, "new_client_phone");
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("create_job", {
+  const { data, error } = await supabase.rpc(jobId ? "update_job" : "create_job", {
+    ...(jobId ? { p_job: jobId } : {}),
     p_title: title,
     p_trade: s(fd, "trade_label"),
     p_client: clientId === "new" ? null : clientId,
@@ -48,8 +58,14 @@ export async function createJobAction(_: JobFormState, fd: FormData): Promise<Jo
     p_members: members,
     p_lead: lead,
   });
-  if (error) return { error: error.code === "22023" || error.code === "42501" ? error.message : "Le chantier n'a pas pu être créé. Réessayez." };
-  redirect(`/chantiers/${data}?cree=1`);
+  if (error) {
+    if (error.code === "22023" || error.code === "42501" || error.code === "P0002") return { error: error.message };
+    if (/Votre offre comprend/.test(error.message)) return { error: error.message };
+    return { error: `Le chantier n'a pas pu être ${jobId ? "modifié" : "créé"}. Réessayez.` };
+  }
+  // Le formulaire ouvre lui-même la fiche (une redirection depuis l'action pouvait laisser
+  // le bouton bloqué sur « Création… »). Les pages de l'espace gérant sont recalculées à chaque visite.
+  return { url: `/chantiers/${data}?${jobId ? "modifie" : "cree"}=1` };
 }
 
 export async function checkConflicts(date: string, time: string, duration: number, memberIds: string[]) {

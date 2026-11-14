@@ -108,6 +108,8 @@ export function eventLabel(type: string, actor: string | null) {
     case "valide": return `Validé par ${who}`;
     case "reprise_demandee": return "Reprise demandée";
     case "reprise_demarree": return `${who} démarre la reprise`;
+    case "modifie": return `Modifié par ${who}`;
+    case "annule": return `Annulé par ${who}`;
     default: return type;
   }
 }
@@ -123,3 +125,7 @@ export const DECISION_LABEL: Record<IncidentDecision, string> = {
   reprogrammer: "Reprogrammer",
   ne_pas_effectuer: "Ne pas effectuer",
 };
+
+/** Un chantier se modifie tant qu'il n'a pas démarré, et s'annule tant qu'il n'est pas terminé. */
+export const EDITABLE_STATUSES: JobStatus[] = ["a_planifier", "planifie", "a_reprendre"];
+export const CANCELLABLE_STATUSES: JobStatus[] = ["a_planifier", "planifie", "a_reprendre", "en_cours", "a_traiter"];

@@ -311,6 +311,32 @@ select pg_temp.fails($$select public.redeem_pilot_code('PILOTE-TEST')$$, 'Le cod
 select pg_temp.check(public.company_access(:'company_b') is null, 'Marc ne voit pas l''état de l''entreprise de Paul');
 reset role;
 
+-- ===== Modifier et annuler un chantier =====
+reset role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select public.create_job('Vitres bureau', 'Vitrerie', :'client', null, :'site', null, current_date + 3, '09:00', 60, null, false, array['Vitres'], array[:'karim']::uuid[], :'karim') as job4 \gset
+select public.update_job(:'job4', 'Vitres et cadres', 'Vitrerie', :'client', null, :'site', null, current_date + 4, '10:30', 90, 'Badge à l''accueil', true,
+  array['Vitres', 'Cadres'], array[:'ines']::uuid[], :'ines');
+select pg_temp.check((select title || ' ' || start_time::text || ' ' || duration_min from public.jobs where id = :'job4') = 'Vitres et cadres 10:30:00 90', 'Marc modifie intitulé, horaire et durée');
+select pg_temp.check((select count(*) from public.checklist_items where job_id = :'job4') = 2, 'La checklist est remplacée');
+select pg_temp.check((select array_agg(member_id) from public.job_assignments where job_id = :'job4') = array[:'ines']::uuid[], 'Inès remplace Karim sur le chantier');
+select pg_temp.check((select status from public.jobs where id = :'job4') = 'planifie', 'Le chantier reste planifié');
+reset role;
+select pg_temp.check(exists (select 1 from public.notifications where job_id = :'job4' and member_id = :'karim' and type = 'mission_retiree')
+  and exists (select 1 from public.notifications where job_id = :'job4' and member_id = :'ines' and type = 'mission_assignee'), 'Karim (retiré) et Inès (ajoutée) sont prévenus');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', false);
+set role authenticated;
+select pg_temp.fails(format($$select public.cancel_job(%L)$$, :'job4'), 'Karim ne peut pas annuler un chantier');
+reset role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select pg_temp.fails(format($$select public.update_job(%L, 'X', 'X', %L, null, %L, null)$$, :'job', :'client', :'site'), 'Un chantier déjà démarré ne se modifie plus');
+select public.cancel_job(:'job4');
+select pg_temp.check((select status from public.jobs where id = :'job4') = 'annule', 'Marc annule le chantier');
+reset role;
+select pg_temp.check(exists (select 1 from public.notifications where job_id = :'job4' and member_id = :'ines' and type = 'mission_annulee'), 'Inès est prévenue de l''annulation');
+
 -- ===== Photos de profil =====
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', false);
 set role authenticated;

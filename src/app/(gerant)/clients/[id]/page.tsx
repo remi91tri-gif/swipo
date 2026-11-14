@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Mail, MapPin, Phone, Plus } from "lucide-react";
+import { ChevronLeft, Mail, Phone, Plus } from "lucide-react";
 import { JobRow } from "@/components/job-row";
 import { Card, CardTitle, LinkButton, PageHeader } from "@/components/ui";
 import { requireSession } from "@/lib/data";
 import { getClientWithJobs } from "@/lib/data-jobs";
 import { CLIENT_TYPE_LABEL, displayPhone } from "@/lib/format";
 import { AddSiteForm } from "./add-site-form";
+import { EditClient, SiteItem } from "./client-edit";
 
 export const metadata: Metadata = { title: "Fiche client" };
 
@@ -28,9 +29,12 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
         title={client.name}
         lead={client.contactName ?? undefined}
         action={
-          <LinkButton href={`/chantiers/nouveau?client=${client.id}`}>
-            <Plus aria-hidden size={16} strokeWidth={2.25} /> Nouveau chantier
-          </LinkButton>
+          <div className="flex flex-wrap gap-2">
+            {session.member.role === "gerant" && <EditClient client={client} />}
+            <LinkButton href={`/chantiers/nouveau?client=${client.id}`}>
+              <Plus aria-hidden size={16} strokeWidth={2.25} /> Nouveau chantier
+            </LinkButton>
+          </div>
         }
       />
       <div className="flex flex-wrap items-start gap-6">
@@ -45,25 +49,19 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
           </Card>
         </div>
         <div className="flex min-w-0 flex-[1_1_300px] flex-col gap-6">
-          {(client.phone || client.email || client.notes) && (
+          {(client.phone || client.email || client.notes || client.contactName) && (
             <Card className="flex flex-col gap-3 p-6">
               <CardTitle>Coordonnées</CardTitle>
               {client.phone && <p className="flex items-center gap-3"><Phone aria-hidden size={17} className="text-ink-muted" /><span className="tabular-nums">{displayPhone(client.phone)}</span></p>}
               {client.email && <p className="flex items-center gap-3 break-all"><Mail aria-hidden size={17} className="flex-none text-ink-muted" />{client.email}</p>}
+              {client.contactName && <p className="text-ink-muted">Contact : {client.contactName}</p>}
               {client.notes && <p className="text-ink-muted">{client.notes}</p>}
             </Card>
           )}
           <Card className="flex flex-col gap-4 p-6">
             <CardTitle>Adresses</CardTitle>
             {client.sites.map((s) => (
-              <div key={s.id} className="flex gap-3">
-                <MapPin aria-hidden size={17} className="mt-0.5 flex-none text-ink-muted" />
-                <span>
-                  {s.label && <span className="block font-semibold">{s.label}</span>}
-                  <span className="block">{s.address}</span>
-                  {s.accessInfo && <span className="block text-sm text-ink-muted">{s.accessInfo}</span>}
-                </span>
-              </div>
+              <SiteItem key={s.id} clientId={client.id} site={s} />
             ))}
             <AddSiteForm clientId={client.id} />
           </Card>
