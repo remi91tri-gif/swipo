@@ -69,3 +69,36 @@ export async function createInviteLink(memberId: string): Promise<{ error?: stri
   if (error) return { error: /désactivé|gérant/.test(error.message) ? error.message : "Le lien n'a pas pu être créé." };
   return { token: data as string };
 }
+
+/** Modifie le prénom, le nom, le portable et le rôle d'une personne de l'équipe. */
+export async function updateMember(
+  memberId: string,
+  input: { firstName: string; lastName: string; phone: string; role: MemberRole },
+): Promise<{ error?: string; member?: Pick<Member, "firstName" | "lastName" | "phone" | "role"> }> {
+  const session = await getSession();
+  if (!session || session.member.role !== "gerant") return { error: "Seul le gérant peut modifier l'équipe." };
+  const firstName = input.firstName.trim();
+  const lastName = input.lastName.trim();
+  if (!firstName) return { error: "Indiquez le prénom." };
+  if (!isValidFrenchMobile(input.phone)) return { error: "Le portable doit commencer par 06 ou 07." };
+  const phone = toE164(input.phone);
+  const allowed: MemberRole[] = ["agent", "chef", "gerant"];
+  if (!allowed.includes(input.role)) return { error: "Rôle inconnu." };
+  // On ne change pas son propre rôle : l'entreprise garderait sinon peut-être zéro gérant.
+  const role = memberId === session.member.id ? session.member.role : input.role;
+  if (isDemo) return { member: { firstName, lastName, phone, role } };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("members")
+    .update({ first_name: firstName, last_name: lastName, phone, role })
+    .eq("id", memberId)
+    .eq("company_id", session.company.id);
+  if (error) {
+    if (error.code === "23505") return { error: "Ce numéro est déjà utilisé par une autre personne de l'équipe." };
+    if (/Votre offre comprend/.test(error.message)) return { error: error.message };
+    return { error: "La modification n'a pas abouti. Réessayez dans un instant." };
+  }
+  revalidatePath("/equipe");
+  return { member: { firstName, lastName, phone, role } };
+}

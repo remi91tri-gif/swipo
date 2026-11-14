@@ -3,11 +3,11 @@
 import { usePending } from "@/lib/use-pending";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useHydrated } from "@/lib/use-hydrated";
-import { Check, Copy, Link2, MessageCircle, Send, UserPlus } from "lucide-react";
+import { Check, Copy, Link2, MessageCircle, Pencil, Send, UserPlus } from "lucide-react";
 import { Avatar, Button, Card, CardTitle, Field, FormError } from "@/components/ui";
 import { ROLE_LABEL, displayPhone } from "@/lib/format";
 import type { Member } from "@/lib/types";
-import { addMember, createInviteLink, setMemberActive } from "./actions";
+import { addMember, createInviteLink, setMemberActive, updateMember } from "./actions";
 
 function inviteText(m: Member, companyName: string, link: string) {
   return `Bonjour ${m.firstName}, ${companyName} vous invite sur Swipo pour voir vos chantiers. Ouvrez ce lien sur votre téléphone pour vous connecter (valable 7 jours) : ${link}`;
@@ -75,6 +75,64 @@ function InviteActions({ member, origin, companyName, again }: { member: Member;
   );
 }
 
+/** Modification d'une personne de l'équipe, directement dans la liste. */
+function EditMember({ member, isMe, onDone, onCancel }: { member: Member; isMe: boolean; onDone: (m: Member) => void; onCancel: () => void }) {
+  const [firstName, setFirstName] = useState(member.firstName);
+  const [lastName, setLastName] = useState(member.lastName);
+  const [phone, setPhone] = useState(member.phone ? displayPhone(member.phone) : "");
+  const [role, setRole] = useState(member.role);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, run] = usePending();
+  const ready = useHydrated();
+  const id = (k: string) => `${k}-${member.id}`;
+  const input = "h-11 w-full rounded-md border border-line-strong bg-surface-raised px-3.5 text-[15px] text-ink";
+
+  return (
+    <form
+      aria-label={`Modifier ${member.firstName}`}
+      className="flex w-full flex-col gap-4 rounded-xl bg-surface p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void run(async () => {
+          setError(null);
+          const res = await updateMember(member.id, { firstName, lastName, phone, role });
+          if (res.error) setError(res.error);
+          else if (res.member) onDone({ ...member, ...res.member });
+        });
+      }}
+    >
+      <FormError message={error} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label htmlFor={id("prenom")} className="mb-1.5 block text-sm text-ink-muted">Prénom</label>
+          <input id={id("prenom")} value={firstName} onChange={(e) => setFirstName(e.target.value)} required className={input} />
+        </div>
+        <div>
+          <label htmlFor={id("nom")} className="mb-1.5 block text-sm text-ink-muted">Nom</label>
+          <input id={id("nom")} value={lastName} onChange={(e) => setLastName(e.target.value)} className={input} />
+        </div>
+        <div>
+          <label htmlFor={id("portable")} className="mb-1.5 block text-sm text-ink-muted">Portable</label>
+          <input id={id("portable")} type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className={input} />
+        </div>
+        <div>
+          <label htmlFor={id("role")} className="mb-1.5 block text-sm text-ink-muted">Rôle</label>
+          <select id={id("role")} value={role} disabled={isMe} onChange={(e) => setRole(e.target.value as Member["role"])} className={`${input} disabled:opacity-60`}>
+            {(["agent", "chef", "gerant"] as const).map((r) => (
+              <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+            ))}
+          </select>
+          {isMe && <p className="mt-1 text-[13px] text-ink-muted">Vous ne pouvez pas changer votre propre rôle.</p>}
+        </div>
+      </div>
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button type="button" variant="secondary" onClick={onCancel}>Annuler</Button>
+        <Button type="submit" disabled={pending || !ready}>{pending ? "Enregistrement…" : "Enregistrer"}</Button>
+      </div>
+    </form>
+  );
+}
+
 export function TeamManager({ initialTeam, origin, companyName, meId }: { initialTeam: Member[]; origin: string; companyName: string; meId: string }) {
   const [team, setTeam] = useState(initialTeam);
   const [state, action, pending] = useActionState(addMember, undefined);
@@ -101,6 +159,7 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
     });
   }
 
+  const [editing, setEditing] = useState<string | null>(null);
   const visible = [...team].sort((a, b) => Number(b.active) - Number(a.active));
 
   return (
@@ -136,10 +195,28 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
                   <InviteActions member={m} origin={origin} companyName={companyName} again />
                 </span>
               )}
-              {m.id !== meId && (
-                <button type="button" disabled={busy || !ready} onClick={() => toggle(m)} className="ml-auto h-9 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-ink">
-                  {m.active ? "Désactiver" : "Réactiver"}
-                </button>
+              <span className="ml-auto flex items-center gap-1">
+                {editing !== m.id && (
+                  <button type="button" onClick={() => setEditing(m.id)} aria-label={`Modifier ${m.firstName}`} className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-ink">
+                    <Pencil aria-hidden size={14} /> Modifier
+                  </button>
+                )}
+                {m.id !== meId && (
+                  <button type="button" disabled={busy || !ready} onClick={() => toggle(m)} className="h-9 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-ink">
+                    {m.active ? "Désactiver" : "Réactiver"}
+                  </button>
+                )}
+              </span>
+              {editing === m.id && (
+                <EditMember
+                  member={m}
+                  isMe={m.id === meId}
+                  onCancel={() => setEditing(null)}
+                  onDone={(updated) => {
+                    setTeam((t) => t.map((x) => (x.id === updated.id ? updated : x)));
+                    setEditing(null);
+                  }}
+                />
               )}
             </li>
           ))}
