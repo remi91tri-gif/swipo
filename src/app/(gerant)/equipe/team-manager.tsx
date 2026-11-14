@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useHydrated } from "@/lib/use-hydrated";
 import { Check, Copy, MessageCircle, Send, UserPlus } from "lucide-react";
 import { Avatar, Button, Card, CardTitle, Field, FormError } from "@/components/ui";
 import { ROLE_LABEL, displayPhone } from "@/lib/format";
@@ -47,6 +48,7 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
   const [team, setTeam] = useState(initialTeam);
   const [state, action, pending] = useActionState(addMember, undefined);
   const [busy, startTransition] = useTransition();
+  const ready = useHydrated();
   const [rowError, setRowError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -101,7 +103,7 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
                 <span className="rounded-full bg-valide-soft px-2.5 py-0.5 text-[13px] font-semibold text-valide">Connecté</span>
               )}
               {m.id !== meId && m.role !== "gerant" && (
-                <button type="button" disabled={busy} onClick={() => toggle(m)} className="ml-auto h-9 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-ink">
+                <button type="button" disabled={busy || !ready} onClick={() => toggle(m)} className="ml-auto h-9 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-ink">
                   {m.active ? "Désactiver" : "Réactiver"}
                 </button>
               )}

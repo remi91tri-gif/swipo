@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Check, Download, ImagePlus, Share2 } from "lucide-react";
 import { Button, Card, CardTitle, FormError } from "@/components/ui";
 import { isDemo } from "@/lib/env";
+import { useHydrated } from "@/lib/use-hydrated";
 import { browserClient } from "@/lib/supabase/client";
 import type { ClientReport, ReportPhoto } from "@/lib/data-report";
 import { markReportSent, saveReport, setCompanyLogo } from "./actions";
@@ -70,6 +71,7 @@ export function ReportEditor({ report }: { report: ClientReport }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, start] = useTransition();
+  const ready = useHydrated();
   const [logoBusy, setLogoBusy] = useState(false);
   const [canShare, setCanShare] = useState(false);
   const [sentAt, setSentAt] = useState(report.lastSentAt);
@@ -221,7 +223,7 @@ export function ReportEditor({ report }: { report: ClientReport }) {
               <span className="text-sm text-ink-muted">Aucun logo : le nom de l&apos;entreprise s&apos;affiche seul.</span>
             )}
             <input ref={logoInput} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => onLogo(e.target.files?.[0])} />
-            <Button variant="secondary" type="button" disabled={logoBusy} onClick={() => logoInput.current?.click()}>
+            <Button variant="secondary" type="button" disabled={logoBusy || !ready} onClick={() => logoInput.current?.click()}>
               <ImagePlus aria-hidden size={16} /> {logoBusy ? "Envoi…" : report.company.logoUrl ? "Changer" : "Ajouter un logo"}
             </Button>
           </div>
@@ -232,15 +234,15 @@ export function ReportEditor({ report }: { report: ClientReport }) {
       {/* Aperçu */}
       <div className="flex min-w-0 flex-[1_1_480px] flex-col gap-4 lg:sticky lg:top-6">
         <div className="flex flex-wrap items-center gap-2.5">
-          <Button type="button" disabled={busy} onClick={() => deliver("download")}>
+          <Button type="button" disabled={busy || !ready} onClick={() => deliver("download")}>
             <Download aria-hidden size={16} /> {busy ? "Préparation…" : "Télécharger le PDF"}
           </Button>
           {canShare && (
-            <Button variant="strong" type="button" disabled={busy} onClick={() => deliver("share")}>
+            <Button variant="strong" type="button" disabled={busy || !ready} onClick={() => deliver("share")}>
               <Share2 aria-hidden size={16} /> Partager
             </Button>
           )}
-          <Button variant="ghost" type="button" disabled={busy} onClick={onSave}>Enregistrer</Button>
+          <Button variant="ghost" type="button" disabled={busy || !ready} onClick={onSave}>Enregistrer</Button>
           {sentAt && <span className="text-sm text-ink-muted">Dernier envoi : {dateLabel(sentAt)}</span>}
         </div>
         <FormError message={error} />

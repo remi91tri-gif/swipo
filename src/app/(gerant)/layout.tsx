@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/auth-actions";
 import { DemoBanner } from "@/components/demo-banner";
+import { NotificationsFeed } from "@/components/notifications";
 import { Sidebar } from "@/components/sidebar";
 import { getSession } from "@/lib/data";
 
@@ -16,8 +17,9 @@ export default async function GerantLayout({ children }: { children: React.React
   return (
     <div className="flex min-h-dvh flex-col">
       <DemoBanner />
+      <NotificationsFeed memberId={member.id} role={member.role} />
       <div className="flex flex-1 flex-wrap">
-        <Sidebar person={{ id: member.id, firstName: member.firstName, lastName: member.lastName }} companyName={company.name} signOut={signOut} />
+        <Sidebar person={{ id: member.id, firstName: member.firstName, lastName: member.lastName }} role={member.role} companyName={company.name} signOut={signOut} />
         <main className="min-w-0 flex-[999_1_640px] px-4 pt-10 pb-16 sm:px-12">
           <div className="mx-auto flex max-w-[1040px] flex-col gap-8">{children}</div>
         </main>

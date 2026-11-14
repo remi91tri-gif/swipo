@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { signOut } from "@/app/auth-actions";
 import { ThemeButton } from "@/components/theme-toggle";
 import { AgentSignOut, KeepMissionsOffline } from "@/components/offline-agent";
+import { NotificationBell } from "@/components/notifications";
 import { DayList } from "./day-list";
 import { getAgentDay, getAgentSession } from "@/lib/data";
 
@@ -19,6 +20,7 @@ export default async function AgentTodayPage() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/swipo-symbole.svg" alt="Swipo" width={32} height={32} />
         <div className="flex items-center gap-2">
+          <NotificationBell role={session.member.role} placement="agent" />
           <ThemeButton />
           <AgentSignOut action={signOut} />
         </div>

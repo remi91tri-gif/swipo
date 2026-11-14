@@ -104,6 +104,23 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
+// Clic sur une alerte : ouvre (ou ramène) Swipo sur la bonne page.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const href = event.notification.data?.href || "/agent";
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const tab = all.find((c) => new URL(c.url).origin === self.location.origin);
+      if (tab) {
+        await tab.focus();
+        return tab.navigate(href);
+      }
+      return self.clients.openWindow(href);
+    })(),
+  );
+});
+
 // À la déconnexion, on efface les pages gardées (elles contiennent les missions).
 self.addEventListener("message", (event) => {
   if (event.data === "effacer") event.waitUntil(caches.delete(PAGES));

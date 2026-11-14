@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { CalendarDays, ClipboardList, Home, LayoutGrid, LogOut, Users } from "lucide-react";
 import { Avatar, Logo } from "./ui";
 import { ThemeSwitch } from "./theme-toggle";
+import { NotificationBell } from "./notifications";
 
 const NAV = [
   { href: "/aujourdhui", label: "Aujourd'hui", icon: LayoutGrid },
@@ -16,19 +17,24 @@ const NAV = [
 
 export function Sidebar({
   person,
+  role,
   companyName,
   signOut,
 }: {
   person: { id: string; firstName: string; lastName: string };
+  role: "gerant" | "chef" | "agent";
   companyName: string;
   signOut: () => Promise<void>;
 }) {
   const path = usePathname();
   return (
     <aside className="flex flex-[1_1_232px] flex-col gap-8 border-line bg-surface-raised px-4 py-7 max-[871px]:border-b min-[872px]:sticky min-[872px]:top-0 min-[872px]:h-dvh min-[872px]:max-w-[232px] min-[872px]:self-start min-[872px]:overflow-y-auto min-[872px]:border-r">
-      <Link href="/aujourdhui" className="ml-2 self-start" aria-label="Swipo, retour à Aujourd'hui">
-        <Logo />
-      </Link>
+      <div className="flex items-center justify-between gap-3 pl-2">
+        <Link href="/aujourdhui" aria-label="Swipo, retour à Aujourd'hui">
+          <Logo />
+        </Link>
+        <NotificationBell role={role} placement="sidebar" />
+      </div>
       <nav aria-label="Menu principal" className="flex flex-col gap-0.5 max-[871px]:flex-row max-[871px]:flex-wrap">
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = path === href || path.startsWith(href + "/");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useHydrated } from "@/lib/use-hydrated";
 import { AlertCircle, Check, RotateCcw } from "lucide-react";
 import { Button, Card, FormError } from "@/components/ui";
 import type { IncidentDecision, JobDetail, JobIncident } from "@/lib/types";
@@ -28,13 +29,14 @@ const DECISIONS: { id: IncidentDecision; label: string; sub: string; tone: "prim
 function useAction() {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const ready = useHydrated();
   const run = (fn: () => Promise<{ error?: string }>) =>
     start(async () => {
       setError(null);
       const res = await fn();
       if (res.error) setError(res.error);
     });
-  return { pending, error, run };
+  return { pending, ready, error, run };
 }
 
 function clock(iso: string) {
@@ -43,7 +45,7 @@ function clock(iso: string) {
 
 /** Décision du gérant sur un imprévu en attente. */
 function DecisionPanel({ jobId, incident, agentName }: { jobId: string; incident: JobIncident; agentName: string }) {
-  const { pending, error, run } = useAction();
+  const { pending, ready, error, run } = useAction();
   const [message, setMessage] = useState("");
   return (
     <Card className="flex flex-col gap-5 border-critique/30 p-7">
@@ -75,7 +77,7 @@ function DecisionPanel({ jobId, incident, agentName }: { jobId: string; incident
           <button
             key={d.id}
             type="button"
-            disabled={pending}
+            disabled={pending || !ready}
             onClick={() => run(() => decideIncident(jobId, incident.id, d.id, message))}
             className={`flex flex-col items-start gap-1 rounded-xl border px-[18px] py-4 text-left disabled:opacity-60 ${
               d.tone === "primary" ? "border-azur bg-azur text-on-azur" : d.tone === "danger" ? "border-line-strong bg-surface-raised text-critique" : "border-line-strong bg-surface-raised text-ink"
@@ -93,7 +95,7 @@ function DecisionPanel({ jobId, incident, agentName }: { jobId: string; incident
 
 /** Contrôle d'un chantier terminé : valider ou demander une reprise. */
 function ReviewPanel({ job }: { job: JobDetail }) {
-  const { pending, error, run } = useAction();
+  const { pending, ready, error, run } = useAction();
   const [rework, setRework] = useState(false);
   const [reason, setReason] = useState("");
   const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
@@ -124,7 +126,7 @@ function ReviewPanel({ job }: { job: JobDetail }) {
         </div>
         <div className="flex flex-wrap justify-end gap-2.5">
           <Button variant="secondary" type="button" onClick={() => setRework(false)}>Annuler</Button>
-          <Button variant="strong" type="button" disabled={pending} onClick={() => run(() => requestRework(job.id, reason, date, time))}>
+          <Button variant="strong" type="button" disabled={pending || !ready} onClick={() => run(() => requestRework(job.id, reason, date, time))}>
             {pending ? "Envoi…" : `Envoyer à ${who}`}
           </Button>
         </div>
@@ -148,7 +150,7 @@ function ReviewPanel({ job }: { job: JobDetail }) {
         <Button variant="secondary" type="button" onClick={() => setRework(true)}>
           <RotateCcw aria-hidden size={16} /> Demander une reprise
         </Button>
-        <Button type="button" disabled={pending} onClick={() => run(() => validateJobs([job.id]))}>
+        <Button type="button" disabled={pending || !ready} onClick={() => run(() => validateJobs([job.id]))}>
           {pending ? "…" : "Valider"}
         </Button>
       </span>
@@ -178,11 +180,11 @@ export function JobActions({ job }: { job: JobDetail }) {
 
 /** « Tout valider » sur l'onglet À vérifier de la liste des chantiers. */
 export function ValidateAll({ ids }: { ids: string[] }) {
-  const { pending, error, run } = useAction();
+  const { pending, ready, error, run } = useAction();
   if (ids.length < 2) return null;
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Button type="button" disabled={pending} onClick={() => run(() => validateJobs(ids))}>
+      <Button type="button" disabled={pending || !ready} onClick={() => run(() => validateJobs(ids))}>
         <Check aria-hidden size={16} /> {pending ? "Validation…" : `Tout valider (${ids.length})`}
       </Button>
       {error && <FormError message={error} />}

@@ -135,3 +135,22 @@ h3 {
 :root:not([data-theme="dark"]) .only-dark {
   display: none !important;
 }
+
+/* Notifications : arrivée des bulles et du panneau, cloche qui tinte. */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes bell-ring {
+  0%, 60%, 100% { transform: rotate(0); }
+  10%, 30% { transform: rotate(14deg); }
+  20%, 40% { transform: rotate(-12deg); }
+  50% { transform: rotate(6deg); }
+}
+.toast-in { animation: toast-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.panel-in { animation: panel-in 0.18s ease-out both; }
+.bell-ring { animation: bell-ring 2.4s ease-in-out 0.4s 2; transform-origin: 50% 10%; }
