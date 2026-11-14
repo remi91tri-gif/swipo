@@ -90,7 +90,8 @@ export async function beforeAgentSignOut(): Promise<boolean> {
     pending === 1
       ? "Une action n'a pas encore été envoyée. Si vous vous déconnectez maintenant, elle sera perdue. Se déconnecter quand même ?"
       : `${pending} actions n'ont pas encore été envoyées. Si vous vous déconnectez maintenant, elles seront perdues. Se déconnecter quand même ?`;
-  if (pending > 0 && !window.confirm(msg)) return false;
+  const back = "Pour revenir, il faudra un nouveau lien de votre gérant.";
+  if (!window.confirm(pending > 0 ? `${msg}\n\n${back}` : `Se déconnecter ? ${back}`)) return false;
   await clearAll().catch(() => {});
   navigator.serviceWorker?.controller?.postMessage("effacer");
   return true;

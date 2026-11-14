@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useHydrated } from "@/lib/use-hydrated";
 import { AlertCircle, Check, RotateCcw } from "lucide-react";
 import { Button, Card, FormError } from "@/components/ui";
@@ -26,16 +26,24 @@ const DECISIONS: { id: IncidentDecision; label: string; sub: string; tone: "prim
 
 // Pas de router.refresh() ici : l'action rafraîchit déjà la page (revalidatePath), et un second
 // rechargement simultané annule le premier, ce qui laisse le bouton bloqué sur « en cours ».
+// État « en cours » tenu à la main (et non par useTransition) : un rafraîchissement arrivé en même
+// temps (notification en direct) ne peut plus le laisser bloqué.
 function useAction() {
-  const [pending, start] = useTransition();
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ready = useHydrated();
-  const run = (fn: () => Promise<{ error?: string }>) =>
-    start(async () => {
-      setError(null);
+  const run = async (fn: () => Promise<{ error?: string }>) => {
+    setError(null);
+    setPending(true);
+    try {
       const res = await fn();
       if (res.error) setError(res.error);
-    });
+    } catch {
+      setError("L'action n'a pas abouti. Réessayez.");
+    } finally {
+      setPending(false);
+    }
+  };
   return { pending, ready, error, run };
 }
 

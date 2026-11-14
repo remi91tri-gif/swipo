@@ -30,6 +30,28 @@ données d'exemple, rien n'est enregistré.
 - **Notifications** : enregistrées par la base, diffusées en direct (Supabase Realtime) ; le contrôle des chantiers
   non démarrés tourne toutes les 5 minutes (`pg_cron`).
 
+## Abonnement (Stripe)
+
+- Offres dans `src/lib/billing/plans.ts` (Starter 39 €, Pro 69 €, Business 99 € HT/mois ; annuel = 11 mois).
+  Les produits, prix, la réduction pilote (-50 % à vie), la TVA et l'espace client Stripe sont créés tout seuls
+  au premier paiement (`ensureCatalog`), en mode test comme en mode réel.
+- Variables du serveur (Vercel) : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, et `STRIPE_TVA` (20 par défaut, 0 si
+  la société n'est pas assujettie). Sans `STRIPE_SECRET_KEY`, la page Abonnement annonce simplement le paiement « bientôt ».
+- Webhook Stripe : `https://<site>/api/stripe/webhook`. La base ne garde que l'empreinte SHA-256 du secret de signature
+  (`private.settings`, clé `stripe_webhook_secret_sha256`) : la mettre à jour si le secret change (passage en mode réel).
+- Codes pilotes : table `pilot_codes` (ex. `insert into pilot_codes (code, uses_left, pilot_days) values ('PILOTE-X', 5, 90)`).
+
+## Connexion des agents
+
+Le gérant crée un lien personnel (Équipe › « Créer le lien de connexion »), valable 7 jours et une seule fois, et
+l'envoie par WhatsApp ou SMS. L'agent l'ouvre et reste connecté sur son téléphone. Nécessite d'activer
+« Allow anonymous sign-ins » dans Supabase › Authentication.
+
+## Pages légales
+
+`src/lib/legal.ts` : à remplir avec les informations de la société. Tant qu'elles sont vides, les pages
+`/mentions-legales`, `/conditions` et `/confidentialite` ne sont pas publiées.
+
 ## Tests de la base de données
 
 ```bash

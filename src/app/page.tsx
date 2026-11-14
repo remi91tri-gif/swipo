@@ -17,6 +17,8 @@ import {
 import { LinkButton, Logo } from "@/components/ui";
 import { ThemeButton } from "@/components/theme-toggle";
 import { HeroDemo, LandingFx } from "@/components/landing-fx";
+import { LandingPricing } from "@/components/landing-pricing";
+import { legalReady } from "@/lib/legal";
 import { TRADES } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -57,7 +59,7 @@ const FAQ = [
   { q: "Est-ce adapté à une petite équipe ?", a: "Swipo est pensé pour les entreprises de 2 à 10 personnes : peu de réglages, des écrans clairs, l'essentiel et rien de plus." },
   { q: "Mes clients voient-ils mes notes internes ?", a: "Jamais. Le compte rendu client ne contient ni vos commentaires internes, ni les noms de vos agents. Vous choisissez les photos et le texte." },
   { q: "Mes données sont-elles protégées ?", a: "Elles sont hébergées en Europe, les photos sont privées, et chaque entreprise ne voit que ses propres données." },
-  { q: "Combien de temps pour démarrer ?", a: "Quelques minutes : créez votre compte, ajoutez votre équipe et votre premier chantier. L'essai est gratuit pendant 30 jours." },
+  { q: "Combien de temps pour démarrer ?", a: "Quelques minutes : créez votre compte, ajoutez votre équipe et votre premier chantier. L'essai est gratuit pendant 14 jours, sans carte bancaire." },
 ];
 
 const H2 = "font-display text-[32px] leading-[40px] font-semibold tracking-[-0.025em] sm:text-[40px] sm:leading-[48px]";
@@ -79,6 +81,7 @@ export default function Home() {
             {[
               ["#fonctionnalites", "Fonctionnalités"],
               ["#comment", "Comment ça marche"],
+              ["#tarifs", "Tarifs"],
               ["#questions", "Questions"],
             ].map(([href, label]) => (
               <a key={href} href={href} className="group relative rounded-lg px-3 py-2 transition-colors hover:text-ink">
@@ -127,7 +130,7 @@ export default function Home() {
                 <LinkButton href="/connexion" variant="secondary" className="h-[52px] px-6 text-base hover:-translate-y-0.5">Se connecter</LinkButton>
               </div>
               <p className="rise flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-muted" style={delay(680)}>
-                <span className="inline-flex items-center gap-1.5"><CheckCircle2 aria-hidden size={15} className="text-valide" /> 30 jours d&apos;essai</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 aria-hidden size={15} className="text-valide" /> 14 jours d&apos;essai gratuit</span>
                 <span className="inline-flex items-center gap-1.5"><CheckCircle2 aria-hidden size={15} className="text-valide" /> Aucune application à installer</span>
                 <span className="inline-flex items-center gap-1.5"><CheckCircle2 aria-hidden size={15} className="text-valide" /> Fonctionne sans réseau</span>
               </p>
@@ -247,6 +250,18 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Tarifs */}
+        <section id="tarifs" className="scroll-mt-20 bg-surface-raised py-24">
+          <div className="mx-auto flex max-w-[1180px] flex-col gap-12 px-4 sm:px-6">
+            <div data-reveal className="mx-auto max-w-[640px] text-center">
+              <p className={KICKER}>TARIFS</p>
+              <h2 className={`mt-3 ${H2}`}>Un prix par entreprise, pas par salarié.</h2>
+              <p className="mt-4 text-[17px] text-ink-muted">Invitez toute votre équipe sans y réfléchir. 14 jours d&apos;essai gratuit, sans carte bancaire.</p>
+            </div>
+            <LandingPricing />
+          </div>
+        </section>
+
         {/* Questions */}
         <section id="questions" className="mx-auto max-w-[860px] scroll-mt-20 px-4 py-24 sm:px-6">
           <div data-reveal>
@@ -300,6 +315,13 @@ export default function Home() {
             <Link href="/connexion" className="transition-colors hover:text-azur">Connexion gérant</Link>
             <Link href="/agent/connexion" className="transition-colors hover:text-azur">Connexion agent</Link>
             <Link href="/inscription" className="transition-colors hover:text-azur">Créer un compte</Link>
+            {legalReady && (
+              <>
+                <Link href="/mentions-legales" className="transition-colors hover:text-azur">Mentions légales</Link>
+                <Link href="/conditions" className="transition-colors hover:text-azur">Conditions</Link>
+                <Link href="/confidentialite" className="transition-colors hover:text-azur">Confidentialité</Link>
+              </>
+            )}
           </nav>
           <p className="w-full text-[13px] text-ink-muted">© {new Date().getFullYear()} Swipo</p>
         </div>

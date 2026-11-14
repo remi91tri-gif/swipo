@@ -5,7 +5,7 @@ import { isDemo } from "./env";
 import { demoAgentDay, demoAgentSession, demoDashboard, demoMembers, demoSession } from "./demo";
 import { createClient } from "./supabase/server";
 import { todayLabel } from "./format";
-import type { AgentDay, Dashboard, JobStatus, JobSummary, Member, Session, TeamNow } from "./types";
+import type { AgentDay, Billing, Dashboard, JobStatus, JobSummary, Member, Session, TeamNow } from "./types";
 
 type MemberRow = {
   id: string;
@@ -20,6 +20,47 @@ type MemberRow = {
 };
 
 const MEMBER_COLUMNS = "id, company_id, user_id, first_name, last_name, phone, email, role, active";
+const COMPANY_COLUMNS =
+  "id, name, plan, subscription_status, trial_ends_at, pilot_until, pilot_discount, billing_interval, current_period_end, cancel_at_period_end, stripe_customer_id";
+
+type CompanyRow = {
+  id: string;
+  name: string;
+  plan: Billing["plan"];
+  subscription_status: string;
+  trial_ends_at: string;
+  pilot_until: string | null;
+  pilot_discount: boolean;
+  billing_interval: Billing["interval"];
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  stripe_customer_id: string | null;
+};
+
+/** Même règle que la fonction company_access de la base. */
+function toBilling(c: CompanyRow): Billing {
+  const now = Date.now();
+  const access: Billing["access"] =
+    c.pilot_until && new Date(c.pilot_until).getTime() > now
+      ? "pilote"
+      : c.subscription_status === "active" || c.subscription_status === "past_due"
+        ? "actif"
+        : new Date(c.trial_ends_at).getTime() > now
+          ? "essai"
+          : "expire";
+  return {
+    access,
+    plan: c.plan,
+    status: c.subscription_status,
+    trialEndsAt: c.trial_ends_at,
+    pilotUntil: c.pilot_until,
+    pilotDiscount: c.pilot_discount,
+    interval: c.billing_interval,
+    periodEnd: c.current_period_end,
+    cancelAtPeriodEnd: c.cancel_at_period_end,
+    hasCustomer: !!c.stripe_customer_id,
+  };
+}
 
 function toMember(r: MemberRow): Member {
   return {
@@ -74,7 +115,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
   const load = () =>
     supabase
       .from("members")
-      .select(`${MEMBER_COLUMNS}, companies(id, name)`)
+      .select(`${MEMBER_COLUMNS}, companies(${COMPANY_COLUMNS})`)
       .eq("user_id", user.id)
       .eq("active", true)
       .limit(1)
@@ -106,8 +147,8 @@ export const getSession = cache(async (): Promise<Session | null> => {
     return null;
   }
 
-  const company = (Array.isArray(data.companies) ? data.companies[0] : data.companies) as { id: string; name: string };
-  return { company, member: toMember(data as MemberRow) };
+  const c = (Array.isArray(data.companies) ? data.companies[0] : data.companies) as CompanyRow;
+  return { company: { id: c.id, name: c.name }, member: toMember(data as MemberRow), billing: toBilling(c) };
 });
 
 /** Session obligatoire : sans connexion valide, retour à la page de connexion. */

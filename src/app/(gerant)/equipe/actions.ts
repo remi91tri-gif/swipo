@@ -38,6 +38,7 @@ export async function addMember(_: AddMemberState, fd: FormData): Promise<AddMem
     .single();
   if (error) {
     if (error.code === "23505") return { error: "Ce numéro est déjà dans votre équipe.", fields };
+    if (/Votre offre comprend/.test(error.message)) return { error: error.message, fields };
     return { error: "L'ajout n'a pas abouti. Réessayez dans un instant.", fields };
   }
   revalidatePath("/equipe");
@@ -53,7 +54,18 @@ export async function setMemberActive(memberId: string, active: boolean): Promis
   if (isDemo) return {};
   const supabase = await createClient();
   const { error } = await supabase.from("members").update({ active }).eq("id", memberId).eq("company_id", session.company.id);
-  if (error) return { error: "La modification n'a pas abouti." };
+  if (error) return { error: /Votre offre comprend/.test(error.message) ? error.message : "La modification n'a pas abouti." };
   revalidatePath("/equipe");
   return {};
+}
+
+/** Lien de connexion personnel d'un agent (valable 7 jours, une seule fois). Un nouveau lien annule le précédent. */
+export async function createInviteLink(memberId: string): Promise<{ error?: string; token?: string }> {
+  const session = await getSession();
+  if (!session || session.member.role !== "gerant") return { error: "Seul le gérant peut inviter." };
+  if (isDemo) return { token: "demonstration" };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("create_invite_link", { p_member: memberId });
+  if (error) return { error: /désactivé|gérant/.test(error.message) ? error.message : "Le lien n'a pas pu être créé." };
+  return { token: data as string };
 }

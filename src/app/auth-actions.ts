@@ -79,37 +79,3 @@ export async function signOut() {
   }
   redirect("/connexion");
 }
-
-// --- Agent : connexion par code SMS ------------------------------------------
-
-export async function sendAgentCode(_: FormState, fd: FormData): Promise<FormState> {
-  const raw = text(fd, "phone");
-  if (!isValidFrenchMobile(raw)) return { error: "Saisissez un numéro de portable (06 ou 07).", fields: { phone: raw } };
-  const phone = toE164(raw);
-  if (isDemo) return { step: "code", phone };
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithOtp({ phone, options: { shouldCreateUser: true } });
-  if (error) return { error: authError(error.message), fields: { phone: raw } };
-  return { step: "code", phone };
-}
-
-export async function verifyAgentCode(_: FormState, fd: FormData): Promise<FormState> {
-  const phone = text(fd, "phone");
-  const token = text(fd, "code").replace(/\s/g, "");
-  if (!/^\d{6}$/.test(token)) return { error: "Le code reçu par SMS contient 6 chiffres.", step: "code", phone };
-  if (isDemo) redirect("/agent");
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
-  if (error) return { error: authError(error.message), step: "code", phone };
-  const { data: linked } = await supabase.rpc("claim_invitation");
-  if (!linked) {
-    const { data: me } = await supabase.from("members").select("id").limit(1);
-    if (!me?.length) {
-      await supabase.auth.signOut();
-      return { error: "Ce numéro n'est rattaché à aucune entreprise. Demandez à votre gérant de vous ajouter à l'équipe." };
-    }
-  }
-  redirect("/agent");
-}

@@ -84,7 +84,7 @@ try {
   current = g;
   await step("Gérant : décide « Continuer » avec un message", async () => {
     await g.goto(`${B}/chantiers/${jobs.villa}`);
-    await g.getByText("IMPRÉVU BLOQUANT").waitFor({ timeout: 15000 });
+    await g.getByText("IMPRÉVU BLOQUANT").first().waitFor({ timeout: 15000 });
     await g.fill("#decision-message", "J'ai appelé le client, il arrive.");
     await g.getByRole("button", { name: /^Continuer/ }).click();
     await g.getByText("Décision :").waitFor({ timeout: 15000 });

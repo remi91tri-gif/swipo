@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Bell, BellRing, CheckCheck, CheckCircle2, Clock, RotateCcw, Sparkles, X } from "lucide-react";
+import { watchActions, whenIdle } from "@/lib/when-idle";
 import { describe, dismissToast, markAllRead, markRead, startFeed, timeAgo, useNotifications, type Notif, type Role } from "@/lib/notifications";
 
 const TONE = {
@@ -53,12 +54,28 @@ function Row({ n, role, onOpen }: { n: Notif; role: Role; onOpen: () => void }) 
 
 /** Écoute les notifications en direct, affiche les bulles et rafraîchit la page ouverte. */
 export function NotificationsFeed({ memberId, role }: { memberId: string; role: Role }) {
-  const router = useRouter();
   const { toasts } = useNotifications();
-  const refresh = useRef(router.refresh);
-  refresh.current = router.refresh;
+  const pathname = usePathname();
+  const path = useRef(pathname);
+  path.current = pathname;
 
-  useEffect(() => startFeed(memberId, role, () => refresh.current()), [memberId, role]);
+  useEffect(() => {
+    watchActions();
+    // Mise à jour de l'écran par un simple rechargement, et seulement quand il montre ce qui a changé
+    // et que personne n'est en train de saisir ou d'envoyer quelque chose. (Rafraîchir la navigation
+    // interne pendant une action pouvait bloquer la page.) Sinon, la bulle suffit.
+    const reloadIfUseful = (n: Notif) => {
+      const p = path.current;
+      const shows = p === "/aujourdhui" || p === "/agent" || (n.jobId !== null && (p === `/chantiers/${n.jobId}` || p === `/agent/mission/${n.jobId}`));
+      if (!shows) return;
+      whenIdle(() => {
+        const el = document.activeElement;
+        const typing = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement;
+        if (!typing && !document.querySelector("[role=dialog]")) window.location.reload();
+      });
+    };
+    return startFeed(memberId, role, reloadIfUseful);
+  }, [memberId, role]);
 
   if (toasts.length === 0) return null;
   return (

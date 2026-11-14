@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ClipboardList, Home, LayoutGrid, LogOut, Users } from "lucide-react";
+import { CalendarDays, ClipboardList, CreditCard, Home, LayoutGrid, LogOut, Users } from "lucide-react";
 import { Avatar, Logo } from "./ui";
 import { ThemeSwitch } from "./theme-toggle";
 import { NotificationBell } from "./notifications";
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/chantiers", label: "Chantiers", icon: ClipboardList },
   { href: "/clients", label: "Clients", icon: Home },
   { href: "/equipe", label: "Équipe", icon: Users },
+  { href: "/abonnement", label: "Abonnement", icon: CreditCard },
 ];
 
 export function Sidebar({

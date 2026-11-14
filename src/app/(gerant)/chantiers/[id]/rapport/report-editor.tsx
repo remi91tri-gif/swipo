@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { usePending } from "@/lib/use-pending";
+import { useEffect, useRef, useState } from "react";
 import { Check, Download, ImagePlus, Share2 } from "lucide-react";
 import { Button, Card, CardTitle, FormError } from "@/components/ui";
 import { isDemo } from "@/lib/env";
@@ -70,7 +71,7 @@ export function ReportEditor({ report }: { report: ClientReport }) {
   const [included, setIncluded] = useState(() => new Set(report.photos.filter((p) => p.included).map((p) => p.id)));
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [busy, start] = useTransition();
+  const [busy, start] = usePending();
   const ready = useHydrated();
   const [logoBusy, setLogoBusy] = useState(false);
   const [canShare, setCanShare] = useState(false);

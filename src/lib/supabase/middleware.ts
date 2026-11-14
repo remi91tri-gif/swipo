@@ -2,10 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isDemo, supabaseAnonKey, supabaseUrl } from "@/lib/env";
 
-const PUBLIC_PATHS = ["/connexion", "/inscription", "/agent/connexion"];
+const PUBLIC_PATHS = ["/connexion", "/inscription", "/agent/connexion", "/rejoindre", "/api/stripe", "/mentions-legales", "/conditions", "/confidentialite"];
 
 /** Rafraîchit la session et renvoie vers la connexion si besoin. */
 export async function updateSession(request: NextRequest) {
+  // Chemin demandé, transmis aux pages (les espaces s'en servent pour l'accès à l'abonnement).
+  request.headers.set("x-pathname", request.nextUrl.pathname);
   if (isDemo) return NextResponse.next({ request });
   // Page d'accueil publique et statique : rien à vérifier.
   if (request.nextUrl.pathname === "/") return NextResponse.next({ request });

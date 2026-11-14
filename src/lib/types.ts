@@ -28,9 +28,26 @@ export type Company = {
   name: string;
 };
 
+export type Access = "pilote" | "actif" | "essai" | "expire";
+
+/** Abonnement de l'entreprise, lu avec la session (pas de requête en plus). */
+export type Billing = {
+  access: Access;
+  plan: "starter" | "pro" | "business";
+  status: string;
+  trialEndsAt: string;
+  pilotUntil: string | null;
+  pilotDiscount: boolean;
+  interval: "month" | "year" | null;
+  periodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  hasCustomer: boolean;
+};
+
 export type Session = {
   company: Company;
   member: Member;
+  billing: Billing;
 };
 
 export type JobSummary = {

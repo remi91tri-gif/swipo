@@ -96,8 +96,25 @@ export function useNotifications() {
   );
 }
 
+// Les bulles survivent au rechargement de la page qui suit une notification.
+const TOASTS_KEY = "swipo-bulles";
+function keepToasts(toasts: Notif[]) {
+  try {
+    sessionStorage.setItem(TOASTS_KEY, JSON.stringify({ at: Date.now(), toasts }));
+  } catch {}
+}
+function restoreToasts(): Notif[] {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(TOASTS_KEY) ?? "null") as { at: number; toasts: Notif[] } | null;
+    return raw && Date.now() - raw.at < 8000 ? raw.toasts : [];
+  } catch {
+    return [];
+  }
+}
+
 export function dismissToast(id: string) {
   set({ toasts: state.toasts.filter((t) => t.id !== id) });
+  keepToasts(state.toasts);
 }
 
 export async function markRead(ids: string[]) {
@@ -135,6 +152,11 @@ export function startFeed(memberId: string, role: Role, onNew: (n: Notif) => voi
   }
   const sb = browserClient();
   let alive = true;
+  const restored = restoreToasts();
+  if (restored.length) {
+    set({ toasts: restored });
+    restored.forEach((t) => setTimeout(() => dismissToast(t.id), 6000));
+  }
   sb.from("notifications")
     .select(COLUMNS)
     .eq("member_id", memberId)
@@ -159,6 +181,7 @@ export function startFeed(memberId: string, role: Role, onNew: (n: Notif) => voi
         const n = toNotif(data as unknown as Row);
         if (state.items.some((x) => x.id === n.id)) return;
         set({ items: [n, ...state.items].slice(0, 50), toasts: [...state.toasts, n].slice(-3) });
+      keepToasts(state.toasts);
         setTimeout(() => dismissToast(n.id), 8000);
         void systemAlert(n, role);
         onNew(n);

@@ -280,7 +280,7 @@ update public.companies set phone = '0493000000' where id = :'company_a';
 select pg_temp.check((select phone from public.companies where id = :'company_a') = '0493000000', 'Le gérant modifie encore les coordonnées de son entreprise');
 select pg_temp.fails(format($$select public.billing_update('mauvais', %L, p_status => 'active')$$, :'company_a'), 'Sans le secret, impossible de changer l''abonnement');
 reset role;
-insert into private.settings values ('stripe_webhook_secret', 'whsec_test');
+insert into private.settings values ('stripe_webhook_secret_sha256', encode(sha256('whsec_test'::bytea), 'hex'));
 update public.companies set trial_ends_at = now() - interval '1 day' where id = :'company_a';
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
 set role authenticated;

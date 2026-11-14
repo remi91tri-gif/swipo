@@ -115,7 +115,11 @@ export async function syncQueue() {
       if (!q) break;
       let res: Result;
       try {
-        res = await perform(q);
+        // Filet de sécurité : une réponse qui n'arrive jamais ne doit pas bloquer la file.
+        res = await Promise.race([
+          perform(q),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("délai dépassé")), 45000)),
+        ]);
       } catch (e) {
         console.warn("Swipo : envoi interrompu, nouvel essai plus tard", e);
         break; // pas de réseau : on garde tout, on réessaiera

@@ -1,23 +1,51 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { usePending } from "@/lib/use-pending";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useHydrated } from "@/lib/use-hydrated";
-import { Check, Copy, MessageCircle, Send, UserPlus } from "lucide-react";
+import { Check, Copy, Link2, MessageCircle, Send, UserPlus } from "lucide-react";
 import { Avatar, Button, Card, CardTitle, Field, FormError } from "@/components/ui";
 import { ROLE_LABEL, displayPhone } from "@/lib/format";
 import type { Member } from "@/lib/types";
-import { addMember, setMemberActive } from "./actions";
+import { addMember, createInviteLink, setMemberActive } from "./actions";
 
 function inviteText(m: Member, companyName: string, link: string) {
-  return `Bonjour ${m.firstName}, ${companyName} vous invite sur Swipo pour voir vos chantiers. Connectez-vous avec votre numéro de portable : ${link}`;
+  return `Bonjour ${m.firstName}, ${companyName} vous invite sur Swipo pour voir vos chantiers. Ouvrez ce lien sur votre téléphone pour vous connecter (valable 7 jours) : ${link}`;
 }
 
-function InviteActions({ member, origin, companyName }: { member: Member; origin: string; companyName: string }) {
+/** Crée le lien de connexion de l'agent puis propose de l'envoyer par WhatsApp, SMS ou copier. */
+function InviteActions({ member, origin, companyName, again }: { member: Member; origin: string; companyName: string; again?: boolean }) {
+  const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const link = `${origin}/agent/connexion?tel=${encodeURIComponent(member.phone ?? "")}`;
-  const message = inviteText(member, companyName, link);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = usePending();
+  const ready = useHydrated();
   const digits = (member.phone ?? "").replace(/\D/g, "");
 
+  if (!link) {
+    return (
+      <span className="flex flex-col items-start gap-1.5">
+        <button
+          type="button"
+          disabled={pending || !ready}
+          onClick={() =>
+            start(async () => {
+              setError(null);
+              const res = await createInviteLink(member.id);
+              if (res.token) setLink(`${origin}/rejoindre/${res.token}`);
+              else setError(res.error ?? "Réessayez.");
+            })
+          }
+          className={`inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold disabled:opacity-60 ${again ? "text-ink-muted hover:bg-hairline hover:text-ink" : "bg-azur text-on-azur hover:bg-azur-strong"}`}
+        >
+          <Link2 aria-hidden size={15} /> {pending ? "Création…" : again ? "Nouveau lien de connexion" : "Créer le lien de connexion"}
+        </button>
+        {error && <span className="text-sm text-critique">{error}</span>}
+      </span>
+    );
+  }
+
+  const message = inviteText(member, companyName, link);
   async function copy() {
     try {
       await navigator.clipboard.writeText(message);
@@ -27,27 +55,30 @@ function InviteActions({ member, origin, companyName }: { member: Member; origin
       window.prompt("Copiez le message d'invitation :", message);
     }
   }
-
   return (
-    <div className="flex flex-wrap gap-2">
-      <a href={`https://wa.me/${digits}?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-md border border-line-strong bg-surface-raised px-3 text-sm font-semibold text-ink hover:bg-hairline">
-        <MessageCircle aria-hidden size={15} /> WhatsApp
-      </a>
-      <a href={`sms:${member.phone}?&body=${encodeURIComponent(message)}`} className="inline-flex h-9 items-center gap-2 rounded-md border border-line-strong bg-surface-raised px-3 text-sm font-semibold text-ink hover:bg-hairline">
-        <Send aria-hidden size={15} /> SMS
-      </a>
-      <button type="button" onClick={copy} className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-ink">
-        {copied ? <Check aria-hidden size={15} /> : <Copy aria-hidden size={15} />}
-        {copied ? "Copié" : "Copier"}
-      </button>
-    </div>
+    <span className="flex flex-col items-start gap-2">
+      <span className="flex flex-wrap gap-2">
+        <a href={`https://wa.me/${digits}?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-md border border-line-strong bg-surface-raised px-3 text-sm font-semibold text-ink hover:bg-hairline">
+          <MessageCircle aria-hidden size={15} /> WhatsApp
+        </a>
+        <a href={`sms:${member.phone}?&body=${encodeURIComponent(message)}`} className="inline-flex h-9 items-center gap-2 rounded-md border border-line-strong bg-surface-raised px-3 text-sm font-semibold text-ink hover:bg-hairline">
+          <Send aria-hidden size={15} /> SMS
+        </a>
+        <button type="button" onClick={copy} className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-ink">
+          {copied ? <Check aria-hidden size={15} /> : <Copy aria-hidden size={15} />}
+          {copied ? "Copié" : "Copier"}
+        </button>
+      </span>
+      <span className="text-[13px] text-ink-muted">Lien personnel, valable 7 jours et une seule fois.</span>
+      <input readOnly aria-label={`Lien de connexion de ${member.firstName}`} value={link} className="sr-only" data-invite-link />
+    </span>
   );
 }
 
 export function TeamManager({ initialTeam, origin, companyName, meId }: { initialTeam: Member[]; origin: string; companyName: string; meId: string }) {
   const [team, setTeam] = useState(initialTeam);
   const [state, action, pending] = useActionState(addMember, undefined);
-  const [busy, startTransition] = useTransition();
+  const [busy, startTransition] = usePending();
   const ready = useHydrated();
   const [rowError, setRowError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -100,7 +131,10 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
                 </span>
               )}
               {m.active && m.hasAccount && m.role !== "gerant" && (
-                <span className="rounded-full bg-valide-soft px-2.5 py-0.5 text-[13px] font-semibold text-valide">Connecté</span>
+                <span className="flex flex-col items-start gap-2">
+                  <span className="rounded-full bg-valide-soft px-2.5 py-0.5 text-[13px] font-semibold text-valide">Connecté</span>
+                  <InviteActions member={m} origin={origin} companyName={companyName} again />
+                </span>
               )}
               {m.id !== meId && m.role !== "gerant" && (
                 <button type="button" disabled={busy || !ready} onClick={() => toggle(m)} className="ml-auto h-9 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-ink">
@@ -118,12 +152,12 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
           <FormError message={state?.error} />
           {state?.added && (
             <p role="status" className="rounded-md bg-valide-soft px-4 py-3 text-sm font-semibold text-valide">
-              {state.added.firstName} est ajouté. Envoyez-lui l&apos;invitation depuis la liste.
+              {state.added.firstName} est ajouté. Créez son lien de connexion dans la liste et envoyez-le-lui.
             </p>
           )}
           <Field id="first_name" name="first_name" label="Prénom" required defaultValue={state?.fields?.first_name} />
           <Field id="last_name" name="last_name" label="Nom" defaultValue={state?.fields?.last_name} />
-          <Field id="phone" name="phone" type="tel" inputMode="tel" label="Portable" placeholder="06 12 34 56 78" required hint="Il sert à se connecter par code SMS." defaultValue={state?.fields?.phone} />
+          <Field id="phone" name="phone" type="tel" inputMode="tel" label="Portable" placeholder="06 12 34 56 78" required hint="Pour lui envoyer son lien de connexion par WhatsApp ou SMS." defaultValue={state?.fields?.phone} />
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-2 text-sm text-ink-muted">Rôle</legend>
             <div className="flex rounded-md bg-hairline p-1">

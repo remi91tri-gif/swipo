@@ -143,7 +143,7 @@ try {
   });
   await step("Gérant : le signalement fait sans réseau est arrivé", async () => {
     await g.goto(`${B}/chantiers/${jobs.aprem}`);
-    await g.getByText("IMPRÉVU BLOQUANT").waitFor({ timeout: 15000 });
+    await g.getByText("IMPRÉVU BLOQUANT").first().waitFor({ timeout: 15000 });
     await g.getByText("Pas de réseau au sous-sol").first().waitFor();
   });
 } finally {

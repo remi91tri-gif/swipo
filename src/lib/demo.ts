@@ -14,14 +14,29 @@ export const demoMembers: Member[] = [
 const [, karim, lea, yanis] = demoMembers;
 const p = (m: Member) => ({ id: m.id, firstName: m.firstName, lastName: m.lastName });
 
+const demoBilling: Session["billing"] = {
+  access: "essai",
+  plan: "starter",
+  status: "trialing",
+  trialEndsAt: new Date(Date.now() + 9 * 86400000).toISOString(),
+  pilotUntil: null,
+  pilotDiscount: false,
+  interval: null,
+  periodEnd: null,
+  cancelAtPeriodEnd: false,
+  hasCustomer: false,
+};
+
 export const demoSession: Session = {
   company: { id: COMPANY, name: "Éclat Riviera" },
   member: demoMembers[0],
+  billing: demoBilling,
 };
 
 export const demoAgentSession: Session = {
   company: demoSession.company,
   member: karim,
+  billing: demoBilling,
 };
 
 export function demoAgentDay(): AgentDay {
