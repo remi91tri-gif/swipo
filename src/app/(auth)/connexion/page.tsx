@@ -33,7 +33,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
         <p>
           Vous êtes agent ?{" "}
           <Link href="/agent/connexion" className="font-semibold">
-            Connexion par SMS
+            Comment me connecter ?
           </Link>
         </p>
       </div>
