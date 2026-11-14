@@ -12,7 +12,17 @@ function slug(text: string) {
 }
 
 /** Le PDF du compte rendu client, avec les photos choisies par le gérant. */
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    return await buildPdf(req, ctx);
+  } catch (e) {
+    console.error("rapport PDF", e);
+    const err = e as Error;
+    return new Response(`Le PDF n'a pas pu être créé. [${err?.name}] ${err?.message}\n${err?.stack?.split("\n").slice(0, 6).join("\n")}`, { status: 500 });
+  }
+}
+
+async function buildPdf(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
   if (!session || session.member.role !== "gerant") return new Response("Réservé au gérant.", { status: 403 });
