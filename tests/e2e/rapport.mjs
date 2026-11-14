@@ -138,8 +138,12 @@ try {
     if ((await g.inputValue("#summary")) !== "Nettoyage complet de la vitrine, intérieur et extérieur.") throw new Error("résumé perdu");
   });
   await step("Agent : n'accède pas au PDF", async () => {
-    const res = await a.request.get(`${B}/chantiers/${job}/rapport/pdf`, { maxRedirects: 0 });
-    if (res.status() === 200) throw new Error("PDF accessible à l'agent");
+    // Requête faite depuis la page de l'agent (avec sa session), comme le ferait son navigateur.
+    const res = await a.evaluate(async (u) => {
+      const r = await fetch(u, { redirect: "manual" });
+      return { status: r.status, type: r.headers.get("content-type") };
+    }, `/chantiers/${job}/rapport/pdf`);
+    if (res.status === 200 && res.type === "application/pdf") throw new Error("PDF accessible à l'agent");
   });
 } finally {
   console.log(errors.length ? "erreurs navigateur :\n" + errors.join("\n") : "aucune erreur navigateur");
