@@ -7,6 +7,8 @@ const PUBLIC_PATHS = ["/connexion", "/inscription", "/agent/connexion"];
 /** Rafraîchit la session et renvoie vers la connexion si besoin. */
 export async function updateSession(request: NextRequest) {
   if (isDemo) return NextResponse.next({ request });
+  // Page d'accueil publique et statique : rien à vérifier.
+  if (request.nextUrl.pathname === "/") return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -26,6 +28,14 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims ?? null;
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
+
+  // Déjà connecté : la page de connexion mène directement à son espace.
+  if (user && (path === "/connexion" || path === "/inscription")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/aujourdhui";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, ChevronLeft, MapPin, Phone } from "lucide-react";
-import { Avatar, Card, CardTitle, StatusPill } from "@/components/ui";
+import { Check, ChevronLeft, FileText, MapPin, Phone } from "lucide-react";
+import { Avatar, Card, CardTitle, LinkButton, StatusPill } from "@/components/ui";
 import { requireSession } from "@/lib/data";
 import { getJob } from "@/lib/data-jobs";
 import { clockTime, displayPhone, durationLabel, eventLabel, longDate, timeLabel } from "@/lib/format";
@@ -40,10 +40,17 @@ export default async function JobPage({ params, searchParams }: { params: Promis
           <h1 className="font-display text-[34px] leading-[42px] font-semibold tracking-[-0.025em]">{job.title}</h1>
           <StatusPill status={job.status} />
         </div>
-        <p className="text-base text-ink-muted">
-          <Link href={`/clients/${job.clientId}`} className="font-semibold text-ink-muted hover:text-ink">{job.clientName}</Link>
-          {job.services.length ? ` · ${job.services.join(", ")}` : ""}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-base text-ink-muted">
+            <Link href={`/clients/${job.clientId}`} className="font-semibold text-ink-muted hover:text-ink">{job.clientName}</Link>
+            {job.services.length ? ` · ${job.services.join(", ")}` : ""}
+          </p>
+          {(job.status === "termine" || job.status === "valide") && (
+            <LinkButton href={`/chantiers/${job.id}/rapport`} variant="secondary">
+              <FileText aria-hidden size={16} /> Compte rendu client
+            </LinkButton>
+          )}
+        </div>
       </div>
 
       <JobActions job={job} />

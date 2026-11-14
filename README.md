@@ -2,7 +2,8 @@
 
 Le suivi de chantiers des petites entreprises de nettoyage. *Un geste, tout est net.*
 
-- **Espace gérant** (ordinateur) : `/aujourdhui`, `/equipe`
+- **Page de présentation** : `/`
+- **Espace gérant** (ordinateur) : `/aujourdhui`, `/planning`, `/chantiers`, `/clients`, `/equipe` ; compte rendu client en PDF sur `/chantiers/<id>/rapport`
 - **Espace agent** (téléphone) : `/agent`, connexion par code SMS sur `/agent/connexion`
 
 ## Démarrer en local
@@ -39,7 +40,8 @@ Lance un PostgreSQL jetable qui imite Supabase, applique les migrations et véri
 | `src/app/(gerant)` | Espace gérant avec la barre latérale |
 | `src/app/(agent)` | Espace agent |
 | `src/components` | Éléments d'interface de la charte (boutons, cartes, pastilles, thème) |
-| `src/lib` | Données, mode démonstration, formats |
+| `src/lib` | Données, mode démonstration, formats, PDF du compte rendu (`report-pdf.tsx`) |
+| `assets/fonts` | Polices de la charte pour le PDF (licence OFL) |
 | `supabase/migrations` | Schéma, sécurité, règles métier |
 | `tests/db` | Tests de la base |
 
@@ -49,6 +51,9 @@ Lance un PostgreSQL jetable qui imite Supabase, applique les migrations et véri
 E2E_URL=http://localhost:3000 E2E_EMAIL=… E2E_PASSWORD=… node tests/e2e/gerant.mjs
 E2E_URL=… E2E_EMAIL=… E2E_PASSWORD=… E2E_AGENT_EMAIL=… E2E_AGENT_PASSWORD=… node tests/e2e/agent.mjs
 ```
+
+Lot 4 (décisions, reprises, validation groupée) : `tests/e2e/decisions.mjs`. Lot 5 (page d'accueil, compte rendu client et PDF) :
+`tests/e2e/rapport.mjs`. Ensuite, `tests/e2e/nettoyage-stockage.mjs` supprime les photos et le logo du compte de test.
 
 Si Playwright est installé ailleurs que dans le projet : `PLAYWRIGHT_PATH=/chemin/vers/playwright/index.js`.
 
