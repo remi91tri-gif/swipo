@@ -4,8 +4,8 @@ import { SignInForm } from "./sign-in-form";
 
 export const metadata: Metadata = { title: "Connexion" };
 
-export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ confirmer?: string; confirme?: string }> }) {
-  const { confirmer, confirme } = await searchParams;
+export default async function ConnexionPage({ searchParams }: { searchParams: Promise<{ confirmer?: string; confirme?: string; lien?: string }> }) {
+  const { confirmer, confirme, lien } = await searchParams;
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5 text-center">
@@ -20,6 +20,11 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
       {confirme && (
         <p role="status" className="rounded-md bg-valide-soft px-4 py-3 text-sm font-semibold text-valide">
           Adresse e-mail confirmée. Connectez-vous pour créer votre espace.
+        </p>
+      )}
+      {lien === "expire" && (
+        <p role="status" className="rounded-md bg-soleil-soft px-4 py-3 text-sm text-soleil-ink">
+          Ce lien a expiré ou a déjà servi. Connectez-vous, ou demandez un nouveau lien.
         </p>
       )}
       <SignInForm />

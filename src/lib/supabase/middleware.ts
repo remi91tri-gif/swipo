@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isDemo, supabaseAnonKey, supabaseUrl } from "@/lib/env";
 
-const PUBLIC_PATHS = ["/connexion", "/inscription", "/agent/connexion", "/rejoindre", "/api/stripe", "/mentions-legales", "/conditions", "/confidentialite"];
+const PUBLIC_PATHS = ["/connexion", "/inscription", "/agent/connexion", "/rejoindre", "/api/stripe", "/mentions-legales", "/conditions", "/confidentialite", "/mot-de-passe-oublie", "/auth/confirmer"];
 
 /** Rafraîchit la session et renvoie vers la connexion si besoin. */
 export async function updateSession(request: NextRequest) {
