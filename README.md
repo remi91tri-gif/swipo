@@ -23,6 +23,13 @@ données d'exemple, rien n'est enregistré.
 3. Copier `.env.example` en `.env.local` et renseigner l'URL et la clé publique (anon) du projet.
 4. Pour la connexion des agents par SMS : activer le fournisseur « Phone » dans Supabase › Authentication.
 
+## Hors connexion et notifications
+
+- **Sans réseau** : `public/sw.js` garde sur le téléphone la liste du jour et les missions ; les gestes de l'agent
+  sont gardés dans une file d'attente locale (`src/lib/offline`) et envoyés au retour du réseau, avec l'heure réelle.
+- **Notifications** : enregistrées par la base, diffusées en direct (Supabase Realtime) ; le contrôle des chantiers
+  non démarrés tourne toutes les 5 minutes (`pg_cron`).
+
 ## Tests de la base de données
 
 ```bash
@@ -52,7 +59,8 @@ E2E_URL=http://localhost:3000 E2E_EMAIL=… E2E_PASSWORD=… node tests/e2e/gera
 E2E_URL=… E2E_EMAIL=… E2E_PASSWORD=… E2E_AGENT_EMAIL=… E2E_AGENT_PASSWORD=… node tests/e2e/agent.mjs
 ```
 
-Lot 4 (décisions, reprises, validation groupée) : `tests/e2e/decisions.mjs`. Lot 5 (page d'accueil, compte rendu client et PDF) :
+Lot 4 (décisions, reprises, validation groupée) : `tests/e2e/decisions.mjs`. Lot 6 (sans réseau) :
+`tests/e2e/hors-connexion.mjs`. Notifications en direct : `tests/e2e/notifications.mjs`. Lot 5 (page d'accueil, compte rendu client et PDF) :
 `tests/e2e/rapport.mjs`. Ensuite, `tests/e2e/nettoyage-stockage.mjs` supprime les photos et le logo du compte de test.
 
 Si Playwright est installé ailleurs que dans le projet : `PLAYWRIGHT_PATH=/chemin/vers/playwright/index.js`.
