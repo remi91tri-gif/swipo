@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState, useTransition } from "react";
+import { useState } from "react";
 import { Check, ChevronLeft } from "lucide-react";
 import { PhotoCapture } from "@/components/photo-capture";
-import { reportIncident } from "../actions";
+import { enqueue } from "@/lib/offline/queue";
+import { useSyncState } from "@/lib/offline/sync";
 
 const CATEGORIES = [
   ["acces_impossible", "Accès impossible"],
@@ -19,23 +20,31 @@ export function ReportForm({ jobId, companyId, title }: { jobId: string; company
   const [category, setCategory] = useState<string>("acces_impossible");
   const [blocking, setBlocking] = useState(true);
   const [comment, setComment] = useState("");
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-  const [pending, start] = useTransition();
+  const [pending, setPending] = useState(false);
+  const { online } = useSyncState();
 
-  const onPhoto = useCallback(async (path: string) => {
-    setPhoto(path);
-    return {};
-  }, []);
-
-  function send() {
-    start(async () => {
-      setError(null);
-      const res = await reportIncident(jobId, category, blocking ? "bloquant" : "information", comment, photo ?? undefined);
-      if (res.error) setError(res.error);
-      else setSent(true);
-    });
+  // Le signalement est gardé sur le téléphone puis envoyé : il part même sans réseau.
+  async function send() {
+    setError(null);
+    setPending(true);
+    try {
+      await enqueue({
+        kind: "incident",
+        jobId,
+        category,
+        urgency: blocking ? "bloquant" : "information",
+        comment,
+        photo: photo ? { path: `${companyId}/${jobId}/${crypto.randomUUID()}.jpg`, blob: photo } : undefined,
+      });
+      setSent(true);
+    } catch {
+      setError("Le signalement n'a pas pu être enregistré sur le téléphone. Réessayez.");
+    } finally {
+      setPending(false);
+    }
   }
 
   const header = (
@@ -54,8 +63,12 @@ export function ReportForm({ jobId, companyId, title }: { jobId: string; company
         {header}
         <main className="flex flex-1 flex-col items-center justify-center gap-3.5 px-6 pb-10 text-center">
           <span aria-hidden className="flex size-20 items-center justify-center rounded-full bg-azur-subtle text-azur"><Check size={36} strokeWidth={2.25} /></span>
-          <h1 className="mt-2 font-display text-[28px] leading-9 font-semibold tracking-[-0.025em]">Envoyé</h1>
-          <p className="text-ink-muted">Votre gérant est prévenu. Sa réponse s&apos;affichera sur la mission.</p>
+          <h1 className="mt-2 font-display text-[28px] leading-9 font-semibold tracking-[-0.025em]">{online ? "Envoyé" : "Enregistré"}</h1>
+          <p className="text-ink-muted">
+            {online
+              ? "Votre gérant est prévenu. Sa réponse s'affichera sur la mission."
+              : "Pas de réseau : votre gérant sera prévenu dès le retour du réseau. Sa réponse s'affichera sur la mission."}
+          </p>
           <Link href={`/agent/mission/${jobId}`} className="mt-4 flex h-[58px] w-full items-center justify-center rounded-lg bg-azur text-[17px] font-semibold text-on-azur">Revenir à la mission</Link>
         </main>
       </>
@@ -84,7 +97,7 @@ export function ReportForm({ jobId, companyId, title }: { jobId: string; company
             ))}
           </div>
         </fieldset>
-        <PhotoCapture companyId={companyId} jobId={jobId} label="Photo" sublabel={photo ? "Photo ajoutée" : "Toucher pour en prendre une"} onUploaded={onPhoto} />
+        <PhotoCapture label="Photo" sublabel={photo ? "Photo ajoutée" : "Toucher pour en prendre une"} onCapture={(blobs) => setPhoto(blobs[0] ?? null)} />
         <div>
           <label htmlFor="detail" className="mb-2 block text-sm text-ink-muted">En quelques mots</label>
           <textarea id="detail" rows={3} value={comment} onChange={(e) => setComment(e.target.value)} className="w-full rounded-lg border border-line-strong bg-surface-raised px-3.5 py-3 text-base text-ink" />

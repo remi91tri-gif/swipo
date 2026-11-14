@@ -222,6 +222,29 @@ select pg_temp.check((select count(*) from public.jobs) = 0, 'Un visiteur non co
 select pg_temp.fails($$select public.create_company('X', 'Y')$$, 'Un visiteur ne peut pas créer d''entreprise');
 reset role;
 
+-- ===== Lot 6 : heure réelle des actions faites hors connexion, et retards =====
+reset role;
+insert into public.jobs (company_id, client_id, site_id, title, scheduled_date, start_time, duration_min,
+  photos_before_required, photos_after_required, checklist_required, created_by)
+values (:'company_a', :'client', :'site', 'Chantier en retard',
+  (now() at time zone 'Europe/Paris' - interval '2 hours')::date, (now() at time zone 'Europe/Paris' - interval '2 hours')::time(0), 60,
+  false, false, false, :'marc')
+returning id as job3 \gset
+insert into public.job_assignments (company_id, job_id, member_id) values (:'company_a', :'job3', :'karim');
+select pg_temp.check(public.notify_late_jobs() >= 1, 'Un chantier non démarré 30 min après l''heure est signalé');
+select pg_temp.check(public.notify_late_jobs() = 0, 'Le retard n''est signalé qu''une fois');
+select pg_temp.check((select count(*) from public.notifications where job_id = :'job3' and type = 'chantier_en_retard' and member_id = :'marc') = 1,
+  'Marc reçoit la notification de retard');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', false);
+set role authenticated;
+select pg_temp.fails($$select public.notify_late_jobs()$$, 'Karim ne peut pas lancer le contrôle des retards');
+select public.start_job(:'job3', now() - interval '20 minutes');
+select pg_temp.check(abs(extract(epoch from (select started_at from public.jobs where id = :'job3') - (now() - interval '20 minutes'))) < 2,
+  'Démarré hors connexion : l''heure réelle du démarrage est gardée');
+select public.finish_job(:'job3', null, now() + interval '3 hours');
+select pg_temp.check((select finished_at from public.jobs where id = :'job3') <= now(), 'Une heure dans le futur est ramenée à maintenant');
+reset role;
+
 -- ===== Effacement complet d'une entreprise (RGPD) =====
 reset role;
 delete from public.companies where id = :'company_a';

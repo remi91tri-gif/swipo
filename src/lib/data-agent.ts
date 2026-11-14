@@ -19,6 +19,8 @@ export type AgentMissionDetail = {
   onsiteContact: string | null;
   instructions: string | null;
   photosRequired: boolean;
+  /** Preuves exigées pour terminer : vérifiées aussi sur le téléphone quand il n'y a pas de réseau. */
+  requires: { before: boolean; after: boolean; checklist: boolean };
   checklist: { id: string; label: string; done: boolean }[];
   teammates: string[];
   photos: MissionPhoto[];
@@ -51,6 +53,7 @@ export async function getAgentMission(session: Session, id: string): Promise<Age
       onsiteContact: null,
       instructions: "Le propriétaire passe à 12 h pour l'état des lieux. Priorité cuisine et salle de bain.",
       photosRequired: true,
+      requires: { before: true, after: true, checklist: true },
       checklist: ["Cuisine et électroménager", "Salle de bain et sanitaires", "Sols et plinthes"].map((label, i) => ({ id: `k${i}`, label, done: false })),
       teammates: [demoMembers[2].firstName],
       photos: [],
@@ -65,7 +68,7 @@ export async function getAgentMission(session: Session, id: string): Promise<Age
   const { data, error } = await supabase
     .from("jobs")
     .select(
-      "id, company_id, title, status, scheduled_date, start_time, instructions, photos_after_required, started_at, finished_at, sites(address, access_info, onsite_contact), checklist_items(id, label, done, position), job_assignments(member_id), photos(id, kind, storage_path, taken_at), incidents(category, urgency, decision, manager_message, reported_at), job_events(type, at, data)",
+      "id, company_id, title, status, scheduled_date, start_time, instructions, photos_before_required, photos_after_required, checklist_required, started_at, finished_at, sites(address, access_info, onsite_contact), checklist_items(id, label, done, position), job_assignments(member_id), photos(id, kind, storage_path, taken_at), incidents(category, urgency, decision, manager_message, reported_at), job_events(type, at, data)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -80,7 +83,9 @@ export async function getAgentMission(session: Session, id: string): Promise<Age
     scheduled_date: string | null;
     start_time: string | null;
     instructions: string | null;
+    photos_before_required: boolean;
     photos_after_required: boolean;
+    checklist_required: boolean;
     started_at: string | null;
     finished_at: string | null;
     sites: { address: string; access_info: string | null; onsite_contact: string | null } | null;
@@ -111,6 +116,7 @@ export async function getAgentMission(session: Session, id: string): Promise<Age
     onsiteContact: r.sites?.onsite_contact ?? null,
     instructions: r.instructions,
     photosRequired: r.photos_after_required,
+    requires: { before: r.photos_before_required, after: r.photos_after_required, checklist: r.checklist_required },
     checklist: [...r.checklist_items].sort((a, b) => a.position - b.position).map(({ id, label, done }) => ({ id, label, done })),
     teammates: r.job_assignments.filter((a) => a.member_id !== session.member.id).map((a) => names.get(a.member_id) ?? ""),
     photos: photos.map((p) => ({ id: p.id, kind: p.kind, url: urls.get(p.storage_path) ?? null })),

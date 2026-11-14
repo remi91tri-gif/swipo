@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useOptimistic, useState, useTransition } from "react";
-import { AlertCircle, Check, ChevronLeft, MapPin, Navigation } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AlertCircle, Check, ChevronLeft, CloudOff, MapPin, Navigation } from "lucide-react";
 import { PhotoCapture } from "@/components/photo-capture";
 import { StatusPill } from "@/components/ui";
 import { timeLabel } from "@/lib/format";
 import type { AgentMissionDetail } from "@/lib/data-agent";
-import { finishJob, registerPhoto, setChecklistItem, startJob } from "./actions";
+import type { JobStatus } from "@/lib/types";
+import { enqueue } from "@/lib/offline/queue";
+import { useQueued, useSyncState } from "@/lib/offline/sync";
 
 const DECISION: Record<string, string> = {
   continuer: "Continuez le chantier.",
@@ -22,41 +23,64 @@ function plural(n: number, word: string) {
 }
 
 export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [comment, setComment] = useState("");
-  const [items, toggleOptimistic] = useOptimistic(mission.checklist, (cur, { id, done }: { id: string; done: boolean }) =>
-    cur.map((c) => (c.id === id ? { ...c, done } : c)),
-  );
+  const queued = useQueued(mission.id);
+  const sync = useSyncState();
 
-  const run = (fn: () => Promise<{ error?: string }>) =>
-    start(async () => {
-      setError(null);
-      const res = await fn();
-      if (res.error) setError(res.error);
-      router.refresh();
-    });
+  // État affiché = ce que dit le serveur + les gestes faits sur le téléphone pas encore envoyés.
+  const view = useMemo(() => {
+    let status: JobStatus = mission.status;
+    const checks = new Map(mission.checklist.map((c) => [c.id, c.done]));
+    const photos: { id: string; kind: "avant" | "apres"; blob: Blob }[] = [];
+    let finishing = false;
+    let incident = false;
+    for (const q of queued) {
+      if (q.kind === "start" && (status === "planifie" || status === "a_reprendre")) status = "en_cours";
+      if (q.kind === "check") checks.set(q.itemId, q.done);
+      if (q.kind === "photo") photos.push({ id: q.id, kind: q.photoKind, blob: q.blob });
+      if (q.kind === "finish") finishing = true;
+      if (q.kind === "incident" && q.urgency === "bloquant") {
+        incident = true;
+        if (status === "en_cours") status = "a_traiter";
+      }
+    }
+    return { status, checks, photos, finishing, incident };
+  }, [mission.status, mission.checklist, queued]);
 
-  const onAvant = useCallback(async (path: string) => {
-    const res = await registerPhoto(mission.id, "avant", path);
-    router.refresh();
-    return res;
-  }, [mission.id, router]);
-  const onApres = useCallback(async (path: string) => {
-    const res = await registerPhoto(mission.id, "apres", path);
-    router.refresh();
-    return res;
-  }, [mission.id, router]);
+  const localUrls = useMemo(() => view.photos.map((p) => ({ id: p.id, kind: p.kind, url: URL.createObjectURL(p.blob) })), [view.photos]);
+  useEffect(() => () => localUrls.forEach((p) => URL.revokeObjectURL(p.url)), [localUrls]);
 
-  const before = mission.photos.filter((p) => p.kind === "avant").length;
-  const after = mission.photos.filter((p) => p.kind === "apres").length;
+  const items = mission.checklist.map((c) => ({ ...c, done: view.checks.get(c.id) ?? c.done }));
+  const before = mission.photos.filter((p) => p.kind === "avant").length + view.photos.filter((p) => p.kind === "avant").length;
+  const after = mission.photos.filter((p) => p.kind === "apres").length + view.photos.filter((p) => p.kind === "apres").length;
   const done = items.filter((c) => c.done).length;
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mission.address)}`;
-  const canStart = mission.status === "planifie" || mission.status === "a_reprendre";
-  const working = mission.status === "en_cours";
-  const blocked = mission.status === "a_traiter";
-  const finished = ["termine", "valide"].includes(mission.status);
+  const status = view.status;
+  const canStart = status === "planifie" || status === "a_reprendre";
+  const working = status === "en_cours";
+  const blocked = status === "a_traiter";
+  const finished = view.finishing || ["termine", "valide"].includes(status);
+  const waiting = queued.length > 0;
+
+  const addPhotos = (kind: "avant" | "apres") => async (blobs: Blob[]) => {
+    for (const blob of blobs) {
+      await enqueue({ kind: "photo", jobId: mission.id, photoKind: kind, path: `${mission.companyId}/${mission.id}/${crypto.randomUUID()}.jpg`, blob });
+    }
+  };
+
+  function finish() {
+    setError(null);
+    const missing: string[] = [];
+    if (mission.requires.before && before === 0) missing.push("photo avant");
+    if (mission.requires.after && after === 0) missing.push("photo après");
+    if (mission.requires.checklist && items.some((c) => !c.done)) missing.push("checklist");
+    if (missing.length) {
+      setError(`Il manque : ${missing.join(", ")}`);
+      return;
+    }
+    void enqueue({ kind: "finish", jobId: mission.id, comment });
+  }
 
   const header = (
     <header className="flex items-center gap-2 px-4 pt-4 pb-2">
@@ -64,7 +88,7 @@ export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
         <ChevronLeft aria-hidden size={20} />
       </Link>
       <span className="flex-1 text-center text-sm font-semibold text-ink-muted tabular-nums">{timeLabel(mission.startTime)}</span>
-      <span className="flex w-11 justify-end"><StatusPill status={mission.status} /></span>
+      <span className="flex w-11 justify-end"><StatusPill status={status} /></span>
     </header>
   );
 
@@ -75,7 +99,14 @@ export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
         <main className="flex flex-1 flex-col items-center justify-center gap-3.5 px-6 pb-10 text-center">
           <span aria-hidden className="flex size-20 items-center justify-center rounded-full bg-valide-soft text-valide"><Check size={38} strokeWidth={2.25} /></span>
           <h1 className="mt-2 font-display text-[28px] leading-9 font-semibold tracking-[-0.025em]">C&apos;est net.</h1>
-          <p className="text-ink-muted">{mission.title} est terminé. Votre gérant a reçu le compte rendu{mission.photos.length ? ` et vos ${mission.photos.length} photos` : ""}.</p>
+          {waiting ? (
+            <p className="flex items-start gap-2 text-left text-ink-muted">
+              <CloudOff aria-hidden size={18} className="mt-0.5 flex-none" />
+              <span>{mission.title} est terminé. Le compte rendu et vos photos partiront vers votre gérant {sync.online ? "dans un instant" : "dès que le réseau revient"}.</span>
+            </p>
+          ) : (
+            <p className="text-ink-muted">{mission.title} est terminé. Votre gérant a reçu le compte rendu{mission.photos.length ? ` et vos ${mission.photos.length} photos` : ""}.</p>
+          )}
           <Link href="/agent" className="mt-4 flex h-[58px] w-full items-center justify-center rounded-lg bg-ink text-[17px] font-semibold text-on-ink">Mes chantiers</Link>
         </main>
       </>
@@ -90,7 +121,7 @@ export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
 
         {error && <p role="alert" className="rounded-lg bg-critique-soft px-4 py-3 font-semibold text-critique">{error}</p>}
 
-        {mission.status === "a_reprendre" && mission.reworkReason && (
+        {status === "a_reprendre" && mission.reworkReason && (
           <section className="flex flex-col gap-1.5 rounded-xl bg-reprise-soft p-4">
             <p className="font-semibold text-reprise">Reprise demandée</p>
             <p className="text-ink">« {mission.reworkReason} »</p>
@@ -107,7 +138,15 @@ export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
         {blocked && (
           <section className="flex flex-col gap-1.5 rounded-xl bg-critique-soft p-4">
             <p className="flex items-center gap-2 font-semibold text-critique"><AlertCircle aria-hidden size={18} /> Problème signalé</p>
-            <p className="text-ink">{mission.openIncident?.decision ? DECISION[mission.openIncident.decision] : "En attente de la réponse de votre gérant."}</p>
+            <p className="text-ink">
+              {view.incident
+                ? sync.online
+                  ? "Envoi à votre gérant…"
+                  : "Pas de réseau : votre gérant sera prévenu dès le retour du réseau."
+                : mission.openIncident?.decision
+                  ? DECISION[mission.openIncident.decision]
+                  : "En attente de la réponse de votre gérant."}
+            </p>
             {mission.openIncident?.message && <p className="text-ink-muted">« {mission.openIncident.message} »</p>}
           </section>
         )}
@@ -132,13 +171,13 @@ export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
           <>
             {(mission.photosRequired || before + after > 0) && (
               <div className="grid grid-cols-2 gap-2.5">
-                <PhotoCapture companyId={mission.companyId} jobId={mission.id} label="Photos avant" sublabel={plural(before, "photo")} onUploaded={onAvant} />
-                <PhotoCapture companyId={mission.companyId} jobId={mission.id} label="Photos après" sublabel={plural(after, "photo")} onUploaded={onApres} />
+                <PhotoCapture label="Photos avant" sublabel={plural(before, "photo")} onCapture={addPhotos("avant")} />
+                <PhotoCapture label="Photos après" sublabel={plural(after, "photo")} onCapture={addPhotos("apres")} />
               </div>
             )}
-            {mission.photos.length > 0 && (
+            {mission.photos.length + localUrls.length > 0 && (
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {mission.photos.map((p) =>
+                {[...mission.photos, ...localUrls].map((p) =>
                   p.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img key={p.id} src={p.url} alt={`Photo ${p.kind}`} className="size-16 flex-none rounded-md object-cover" />
@@ -160,14 +199,7 @@ export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
                     role="checkbox"
                     aria-checked={c.done}
                     disabled={!working}
-                    onClick={() =>
-                      start(async () => {
-                        toggleOptimistic({ id: c.id, done: !c.done });
-                        const res = await setChecklistItem(mission.id, c.id, !c.done);
-                        if (res.error) setError(res.error);
-                        router.refresh();
-                      })
-                    }
+                    onClick={() => void enqueue({ kind: "check", jobId: mission.id, itemId: c.id, done: !c.done })}
                     className="flex min-h-[50px] items-center gap-3.5 border-t border-hairline text-left"
                   >
                     <span aria-hidden className={`flex size-[26px] flex-none items-center justify-center rounded-full ${c.done ? "bg-valide text-on-ink" : "border-2 border-line-strong"}`}>
@@ -191,8 +223,8 @@ export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
 
       <div className="sticky bottom-0 flex gap-2.5 bg-surface px-5 pt-2.5 pb-7">
         {canStart && (
-          <button type="button" disabled={pending} onClick={() => run(() => startJob(mission.id))} className="h-[58px] flex-1 rounded-lg bg-azur text-lg font-semibold text-on-azur shadow-card disabled:opacity-60">
-            {pending ? "…" : mission.status === "a_reprendre" ? "Démarrer la reprise" : "Démarrer"}
+          <button type="button" onClick={() => void enqueue({ kind: "start", jobId: mission.id })} className="h-[58px] flex-1 rounded-lg bg-azur text-lg font-semibold text-on-azur shadow-card">
+            {status === "a_reprendre" ? "Démarrer la reprise" : "Démarrer"}
           </button>
         )}
         {(working || blocked) && (
@@ -201,8 +233,8 @@ export function MissionScreen({ mission }: { mission: AgentMissionDetail }) {
           </Link>
         )}
         {working && (
-          <button type="button" disabled={pending} onClick={() => run(() => finishJob(mission.id, comment))} className="h-[58px] flex-1 rounded-lg bg-azur text-lg font-semibold text-on-azur disabled:opacity-60">
-            {pending ? "…" : "Terminer"}
+          <button type="button" onClick={finish} className="h-[58px] flex-1 rounded-lg bg-azur text-lg font-semibold text-on-azur">
+            Terminer
           </button>
         )}
       </div>

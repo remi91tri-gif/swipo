@@ -32,6 +32,7 @@ async function page(viewport) {
   const ctx = await b.newContext({ viewport });
   const p = await ctx.newPage();
   p.on("pageerror", (e) => errors.push(e.message));
+  p.on("console", (m) => m.text().startsWith("Swipo :") && console.log("    (console) " + m.text().slice(0, 160)));
   current = p;
   return p;
 }

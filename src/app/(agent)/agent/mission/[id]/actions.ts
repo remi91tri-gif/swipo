@@ -24,16 +24,17 @@ async function rpc(name: string, args: Record<string, unknown>, jobId: string): 
   return {};
 }
 
-export async function startJob(jobId: string) {
-  return rpc("start_job", { p_job: jobId }, jobId);
+/** `at` : heure réelle du geste, quand il a été fait sans réseau et envoyé plus tard. */
+export async function startJob(jobId: string, at?: string) {
+  return rpc("start_job", { p_job: jobId, p_at: at ?? null }, jobId);
 }
 
 export async function setChecklistItem(jobId: string, itemId: string, done: boolean) {
   return rpc("set_checklist_item", { p_item: itemId, p_done: done }, jobId);
 }
 
-export async function finishJob(jobId: string, comment: string) {
-  return rpc("finish_job", { p_job: jobId, p_comment: comment || null }, jobId);
+export async function finishJob(jobId: string, comment: string, at?: string) {
+  return rpc("finish_job", { p_job: jobId, p_comment: comment || null, p_at: at ?? null }, jobId);
 }
 
 /** Enregistre une photo déjà déposée dans le stockage par le navigateur. */
@@ -51,7 +52,8 @@ export async function registerPhoto(jobId: string, kind: "avant" | "apres" | "pr
     taken_by: session.member.id,
     incident_id: incidentId ?? null,
   });
-  if (error) return { error: "La photo n'a pas pu être enregistrée." };
+  // Déjà enregistrée (envoi répété après une coupure de réseau) : c'est bon.
+  if (error && error.code !== "23505") return { error: "La photo n'a pas pu être enregistrée." };
   revalidatePath(`/agent/mission/${jobId}`);
   return {};
 }
@@ -62,10 +64,17 @@ export async function reportIncident(
   urgency: "bloquant" | "information",
   comment: string,
   photoPath?: string,
+  at?: string,
 ): Promise<Result & { incidentId?: string }> {
   if (isDemo) return DEMO;
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("report_incident", { p_job: jobId, p_category: category, p_urgency: urgency, p_comment: comment || null });
+  const { data, error } = await supabase.rpc("report_incident", {
+    p_job: jobId,
+    p_category: category,
+    p_urgency: urgency,
+    p_comment: comment || null,
+    p_at: at ?? null,
+  });
   if (error) return { error: friendly(error.message) };
   if (photoPath) await registerPhoto(jobId, "probleme", photoPath, data as string);
   revalidatePath(`/agent/mission/${jobId}`);
