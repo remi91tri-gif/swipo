@@ -19,7 +19,7 @@ export async function addMember(_: AddMemberState, fd: FormData): Promise<AddMem
     phone: String(fd.get("phone") ?? "").trim(),
     role: String(fd.get("role") ?? "agent"),
   };
-  const role: MemberRole = fields.role === "chef" ? "chef" : "agent";
+  const role: MemberRole = fields.role === "chef" ? "chef" : fields.role === "gerant" ? "gerant" : "agent";
   if (!fields.first_name) return { error: "Indiquez le prénom.", fields };
   if (!isValidFrenchMobile(fields.phone)) return { error: "Le portable doit commencer par 06 ou 07 : c'est lui qui sert à se connecter.", fields };
   const phone = toE164(fields.phone);

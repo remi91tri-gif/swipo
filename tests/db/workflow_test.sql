@@ -286,10 +286,16 @@ select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1
 set role authenticated;
 select pg_temp.check(public.company_access(:'company_a') = 'expire', 'Après l''essai, l''accès expire');
 select pg_temp.fails(format($$insert into public.members (company_id, first_name, role) select %L, 'Agent ' || g, 'agent' from generate_series(1, 5) g$$, :'company_a'),
-  'Offre Starter : pas plus de 5 salariés');
+  'Offre Starter : pas plus de 3 salariés');
 select public.billing_update('whsec_test', :'company_a', 'cus_123', 'sub_123', 'active', 'pro', 'year', now() + interval '1 year', false);
 select pg_temp.check(public.company_access(:'company_a') = 'actif', 'Après paiement (secret correct), l''abonnement est actif');
 select pg_temp.check((select plan || '/' || billing_interval from public.companies where id = :'company_a') = 'pro/year', 'Offre Pro annuelle enregistrée');
+insert into public.members (company_id, first_name, role) values (:'company_a', 'Julie', 'gerant');
+select pg_temp.check((select count(*) from public.members where company_id = :'company_a' and role = 'gerant') = 2, 'Offre Pro : un 2e gérant est possible');
+select pg_temp.fails(format($$insert into public.members (company_id, first_name, role) values (%L, 'Paul', 'gerant')$$, :'company_a'), 'Offre Pro : pas de 3e gérant');
+select public.create_invite_link(id) is not null as ok from public.members where company_id = :'company_a' and first_name = 'Julie' \gset
+select pg_temp.check(:'ok', 'Marc peut inviter Julie, la 2e gérante, par lien');
+select pg_temp.fails(format($$select public.create_invite_link(%L)$$, :'marc'), 'Marc ne peut pas créer de lien pour lui-même');
 reset role;
 insert into public.pilot_codes (code, uses_left, pilot_days) values ('PILOTE-TEST', 1, 90);
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);

@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/data";
 import { REPORTABLE, getClientReport } from "@/lib/data-report";
 import { isDemo } from "@/lib/env";
+import { hasClientReport } from "@/lib/billing/plans";
 import { renderReportPdf, type PdfImage } from "@/lib/report-pdf";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,6 +26,7 @@ async function buildPdf(_req: Request, { params }: { params: Promise<{ id: strin
   const { id } = await params;
   const session = await getSession();
   if (!session || session.member.role !== "gerant") return new Response("Réservé au gérant.", { status: 403 });
+  if (!hasClientReport(session.billing)) return new Response("Inclus dans les offres Pro et Business.", { status: 402 });
   const report = await getClientReport(session, id);
   if (!report) return new Response("Chantier introuvable.", { status: 404 });
   if (!REPORTABLE.includes(report.status)) return new Response("Le chantier n'est pas encore terminé.", { status: 409 });

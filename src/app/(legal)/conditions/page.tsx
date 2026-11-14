@@ -38,7 +38,7 @@ export default function Conditions() {
       <ul>
         {PLANS.map((p) => (
           <li key={p.id}>
-            {p.name} : {euros(price(p.id, "month"))} HT par mois, ou {euros(price(p.id, "year"))} HT par an (un mois offert), jusqu&apos;à {p.members} salariés.
+            {p.name} : {euros(price(p.id, "month"))} HT par mois, ou {euros(price(p.id, "year"))} HT par an (un mois offert) : {p.seats}{p.clientReport ? ", comptes rendus clients en PDF" : ""}.
           </li>
         ))}
       </ul>

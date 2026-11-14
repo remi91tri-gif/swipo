@@ -43,7 +43,7 @@ const FEATURES = [
   { icon: Smartphone, title: "La mission dans la poche de l'agent", text: "Adresse, codes d'accès, consignes, checklist. L'agent démarre, prend ses photos avant/après et termine. Rien à installer." },
   { icon: BellRing, title: "Les imprévus en direct", text: "Portail fermé, produit manquant, dégât : vous êtes alerté aussitôt et vous décidez en un clic. L'agent voit votre réponse sans recharger." },
   { icon: ClipboardCheck, title: "Validation et reprises", text: "Contrôlez ce que vous voulez, validez plusieurs chantiers d'un coup, ou demandez une reprise avec le motif et la date." },
-  { icon: FileText, title: "Un compte rendu client professionnel", text: "Un PDF à votre logo avec les photos avant/après, les travaux réalisés et vos réserves. À envoyer par e-mail ou WhatsApp." },
+  { icon: FileText, title: "Un compte rendu client professionnel", text: "Un PDF à votre logo avec les photos avant/après, les travaux réalisés et vos réserves. À envoyer par e-mail ou WhatsApp. Offres Pro et Business." },
   { icon: CloudOff, title: "Même sans réseau", text: "Sous-sol, cave, parking : l'agent continue à travailler. Tout part tout seul, à l'heure réelle, dès que le réseau revient." },
 ];
 
@@ -105,13 +105,6 @@ export default function Home() {
           <div aria-hidden className="pointer-events-none absolute top-40 -left-24 size-72 rounded-full bg-soleil-soft opacity-60 blur-3xl" />
           <div className="relative mx-auto grid max-w-[1180px] items-center gap-16 px-4 pt-16 pb-28 sm:px-6 lg:grid-cols-[1fr_1.05fr] lg:pt-24 lg:pb-32">
             <div className="flex flex-col items-start gap-6">
-              <span className="rise inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface-raised px-3.5 py-1.5 text-[13px] font-semibold text-ink-muted" style={delay(0)}>
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-soleil opacity-60" />
-                  <span className="relative size-2 rounded-full bg-soleil" />
-                </span>
-                Pour les entreprises de nettoyage de 2 à 10 personnes
-              </span>
               <h1 className="font-display text-[40px] leading-[46px] font-semibold tracking-[-0.035em] sm:text-[56px] sm:leading-[62px]">
                 {headline.map((w, k) => (
                   <span key={w} className="rise mr-[0.25em] inline-block" style={delay(80 + k * 90)}>{w}</span>

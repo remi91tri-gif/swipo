@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, ChevronLeft, FileText, MapPin, Phone } from "lucide-react";
+import { Check, ChevronLeft, FileText, Lock, MapPin, Phone } from "lucide-react";
 import { Avatar, Card, CardTitle, LinkButton, StatusPill } from "@/components/ui";
 import { requireSession } from "@/lib/data";
 import { getJob } from "@/lib/data-jobs";
 import { clockTime, displayPhone, durationLabel, eventLabel, longDate, timeLabel } from "@/lib/format";
 import { JobActions } from "./job-actions";
 import { DECISION_LABEL } from "@/lib/format";
+import { hasClientReport } from "@/lib/billing/plans";
 
 export const metadata: Metadata = { title: "Fiche chantier" };
 
@@ -45,11 +46,16 @@ export default async function JobPage({ params, searchParams }: { params: Promis
             <Link href={`/clients/${job.clientId}`} className="font-semibold text-ink-muted hover:text-ink">{job.clientName}</Link>
             {job.services.length ? ` · ${job.services.join(", ")}` : ""}
           </p>
-          {(job.status === "termine" || job.status === "valide") && (
-            <LinkButton href={`/chantiers/${job.id}/rapport`} variant="secondary">
-              <FileText aria-hidden size={16} /> Compte rendu client
-            </LinkButton>
-          )}
+          {(job.status === "termine" || job.status === "valide") &&
+            (hasClientReport(session.billing) ? (
+              <LinkButton href={`/chantiers/${job.id}/rapport`} variant="secondary">
+                <FileText aria-hidden size={16} /> Compte rendu client
+              </LinkButton>
+            ) : (
+              <LinkButton href="/abonnement" variant="ghost" title="Inclus dans les offres Pro et Business">
+                <Lock aria-hidden size={15} /> Compte rendu client · offre Pro
+              </LinkButton>
+            ))}
         </div>
       </div>
 

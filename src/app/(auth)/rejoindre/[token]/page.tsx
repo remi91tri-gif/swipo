@@ -31,11 +31,11 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
       <div className="flex flex-col gap-2">
         <h1 className="font-display text-[26px] leading-8 font-semibold tracking-[-0.02em]">Bonjour {info.first_name}</h1>
         <p className="text-ink-muted">
-          <strong className="text-ink">{info.company_name}</strong> vous invite sur Swipo. Vous y verrez vos chantiers du jour, les adresses et les consignes.
+          <strong className="text-ink">{info.company_name}</strong> vous invite sur Swipo. Vous y retrouverez les chantiers, les adresses et les consignes.
         </p>
       </div>
       <JoinButton token={token} />
-      <p className="text-[13px] text-ink-muted">Ce téléphone restera connecté. Pas de mot de passe à retenir.</p>
+      <p className="text-[13px] text-ink-muted">Cet appareil restera connecté. Pas de mot de passe à retenir.</p>
     </Card>
   );
 }

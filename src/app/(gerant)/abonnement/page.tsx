@@ -73,7 +73,9 @@ export default async function AbonnementPage({ searchParams }: { searchParams: P
                     ? "Le dernier paiement a échoué : mettez à jour votre carte pour garder l'accès."
                     : b.cancelAtPeriodEnd
                       ? `Résilié : l'accès reste ouvert jusqu'au ${date(b.periodEnd)}.`
-                      : `Prochain renouvellement le ${date(b.periodEnd)}.`}
+                      : b.periodEnd
+                        ? `Prochain renouvellement le ${date(b.periodEnd)}.`
+                        : "Abonnement actif."}
                 </p>
               </>
             )}

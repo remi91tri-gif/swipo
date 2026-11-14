@@ -124,19 +124,19 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
                   {!m.active ? " · désactivé" : ""}
                 </span>
               </span>
-              {m.active && m.role !== "gerant" && !m.hasAccount && (
+              {m.active && m.id !== meId && !m.hasAccount && (
                 <span className="flex flex-col items-start gap-2">
                   <span className="rounded-full bg-soleil-soft px-2.5 py-0.5 text-[13px] font-semibold text-soleil-ink">Invitation à envoyer</span>
                   <InviteActions member={m} origin={origin} companyName={companyName} />
                 </span>
               )}
-              {m.active && m.hasAccount && m.role !== "gerant" && (
+              {m.active && m.hasAccount && m.id !== meId && (
                 <span className="flex flex-col items-start gap-2">
                   <span className="rounded-full bg-valide-soft px-2.5 py-0.5 text-[13px] font-semibold text-valide">Connecté</span>
                   <InviteActions member={m} origin={origin} companyName={companyName} again />
                 </span>
               )}
-              {m.id !== meId && m.role !== "gerant" && (
+              {m.id !== meId && (
                 <button type="button" disabled={busy || !ready} onClick={() => toggle(m)} className="ml-auto h-9 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-ink">
                   {m.active ? "Désactiver" : "Réactiver"}
                 </button>
@@ -161,7 +161,7 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-2 text-sm text-ink-muted">Rôle</legend>
             <div className="flex rounded-md bg-hairline p-1">
-              {(["agent", "chef"] as const).map((r) => (
+              {(["agent", "chef", "gerant"] as const).map((r) => (
                 <label key={r} className="flex-1 cursor-pointer">
                   <input type="radio" name="role" value={r} defaultChecked={(state?.fields?.role ?? "agent") === r} className="peer sr-only" />
                   <span className="flex h-9 items-center justify-center rounded-[9px] text-sm font-semibold text-ink peer-checked:bg-surface-raised peer-checked:shadow-[0_1px_3px_#0000002e] peer-focus-visible:shadow-[0_0_0_2px_var(--azur)]">

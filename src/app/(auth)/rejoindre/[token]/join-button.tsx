@@ -24,12 +24,12 @@ export function JoinButton({ token }: { token: string }) {
       if (current.session) await sb.auth.signOut({ scope: "local" });
       const { error: signErr } = await sb.auth.signInAnonymously();
       if (signErr) throw new Error(/disabled/i.test(signErr.message) ? "La connexion par lien n'est pas encore activée. Prévenez votre gérant." : "Connexion impossible. Vérifiez votre réseau et réessayez.");
-      const { error: claimErr } = await sb.rpc("claim_invite", { p_token: token });
+      const { data: role, error: claimErr } = await sb.rpc("claim_invite", { p_token: token });
       if (claimErr) {
         await sb.auth.signOut({ scope: "local" });
         throw new Error(/plus valable/.test(claimErr.message) ? claimErr.message : "Le lien n'a pas pu être utilisé. Réessayez.");
       }
-      window.location.href = "/agent";
+      window.location.href = role === "agent" ? "/agent" : "/aujourdhui";
     } catch (e) {
       setError((e as Error).message);
       setPending(false);

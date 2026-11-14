@@ -31,11 +31,13 @@ export function ensureCatalog() {
       const missing = (["month", "year"] as Interval[]).filter((i) => !byKey.has(lookupKey(plan.id, i)));
       if (!missing.length) continue;
       const found = await s.products.search({ query: `metadata['swipo_plan']:'${plan.id}'` });
+      const description = `${plan.tagline} · ${plan.seats}`;
+      if (found.data[0] && found.data[0].description !== description) await s.products.update(found.data[0].id, { description });
       const product =
         found.data[0] ??
         (await s.products.create({
           name: `Swipo ${plan.name}`,
-          description: `${plan.tagline} · jusqu'à ${plan.members} salariés`,
+          description,
           metadata: { swipo_plan: plan.id },
           tax_code: "txcd_10103001", // logiciel en ligne (SaaS)
         }));
