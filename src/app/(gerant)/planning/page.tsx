@@ -63,7 +63,7 @@ export default async function PlanningPage({ searchParams }: { searchParams: Pro
             {day.rows.map(({ member, jobs }) => (
               <li key={member.id} className="flex flex-wrap gap-x-6 gap-y-3 border-t border-hairline px-7 py-5 first:border-t-0">
                 <div className="flex w-[180px] items-center gap-3 self-start">
-                  <Avatar id={member.id} firstName={member.firstName} lastName={member.lastName} />
+                  <Avatar id={member.id} firstName={member.firstName} lastName={member.lastName} avatarUrl={member.avatarUrl} />
                   <span>
                     <span className="block font-semibold">{member.firstName} {member.lastName}</span>
                     <span className="block text-[13px] text-ink-muted">{ROLE_LABEL[member.role]}</span>

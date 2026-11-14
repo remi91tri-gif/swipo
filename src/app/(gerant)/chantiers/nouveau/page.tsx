@@ -12,7 +12,7 @@ export default async function NewJobPage({ searchParams }: { searchParams: Promi
   const { client, date } = await searchParams;
   const session = await requireSession();
   const [clients, team] = await Promise.all([getClients(session), getTeam(session)]);
-  const people = team.filter((m) => m.active).map(({ id, firstName, lastName, role }) => ({ id, firstName, lastName, role }));
+  const people = team.filter((m) => m.active).map(({ id, firstName, lastName, role, avatarUrl }) => ({ id, firstName, lastName, role, avatarUrl }));
 
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-col gap-7">

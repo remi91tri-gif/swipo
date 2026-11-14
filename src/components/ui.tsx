@@ -72,7 +72,36 @@ export function StatusPill({ status }: { status: JobStatus }) {
 // --- Avatars -----------------------------------------------------------------
 const AVATAR = { azur: "bg-azur-soft text-azur", valide: "bg-valide-soft text-valide", reprise: "bg-reprise-soft text-reprise" };
 
-export function Avatar({ id, firstName, lastName, size = 36, ring = false }: { id: string; firstName: string; lastName?: string; size?: number; ring?: boolean }) {
+export function Avatar({
+  id,
+  firstName,
+  lastName,
+  avatarUrl,
+  size = 36,
+  ring = false,
+}: {
+  id: string;
+  firstName: string;
+  lastName?: string;
+  avatarUrl?: string | null;
+  size?: number;
+  ring?: boolean;
+}) {
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt=""
+        aria-hidden="true"
+        width={size}
+        height={size}
+        loading="lazy"
+        style={{ width: size, height: size }}
+        className={cx("inline-block flex-none rounded-full bg-hairline object-cover", ring && "border-2 border-surface-raised")}
+      />
+    );
+  }
   return (
     <span
       aria-hidden="true"
@@ -84,7 +113,7 @@ export function Avatar({ id, firstName, lastName, size = 36, ring = false }: { i
   );
 }
 
-export function AvatarStack({ people }: { people: { id: string; firstName: string; lastName: string }[] }) {
+export function AvatarStack({ people }: { people: { id: string; firstName: string; lastName: string; avatarUrl?: string | null }[] }) {
   if (people.length === 0) {
     return <span aria-label="Aucun agent affecté" className="inline-block size-[30px] rounded-full border-[1.5px] border-dashed border-line-strong" />;
   }

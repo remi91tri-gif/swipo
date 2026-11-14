@@ -21,6 +21,8 @@ export type Member = {
   active: boolean;
   /** Vrai quand l'agent s'est déjà connecté au moins une fois. */
   hasAccount: boolean;
+  /** Photo de profil, ou null (on affiche alors les initiales). */
+  avatarUrl?: string | null;
 };
 
 export type Company = {
@@ -57,7 +59,7 @@ export type JobSummary = {
   city: string;
   startTime: string | null;
   status: JobStatus;
-  team: Pick<Member, "id" | "firstName" | "lastName">[];
+  team: Pick<Member, "id" | "firstName" | "lastName" | "avatarUrl">[];
 };
 
 export type Blocker = {
@@ -78,7 +80,7 @@ export type ToVerify = {
 };
 
 export type TeamNow = {
-  member: Pick<Member, "id" | "firstName" | "lastName">;
+  member: Pick<Member, "id" | "firstName" | "lastName" | "avatarUrl">;
   state: "en_cours" | "bloque" | "libre";
   detail: string;
 };
@@ -113,7 +115,7 @@ export type JobListItem = {
   startTime: string | null;
   durationMin: number | null;
   status: JobStatus;
-  team: Pick<Member, "id" | "firstName" | "lastName">[];
+  team: Pick<Member, "id" | "firstName" | "lastName" | "avatarUrl">[];
 };
 
 export type JobEvent = { at: string; type: string; actor: string | null; data: Record<string, unknown> };
@@ -153,7 +155,7 @@ export type JobIncident = {
 
 export type PlanningDay = {
   date: string;
-  rows: { member: Pick<Member, "id" | "firstName" | "lastName" | "role">; jobs: JobListItem[] }[];
+  rows: { member: Pick<Member, "id" | "firstName" | "lastName" | "role" | "avatarUrl">; jobs: JobListItem[] }[];
   unassigned: JobListItem[];
 };
 

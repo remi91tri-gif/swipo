@@ -172,7 +172,7 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
         <ul>
           {visible.map((m) => (
             <li key={m.id} className={`flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-hairline px-7 py-4 ${m.active ? "" : "opacity-55"}`}>
-              <Avatar id={m.id} firstName={m.firstName} lastName={m.lastName} />
+              <Avatar id={m.id} firstName={m.firstName} lastName={m.lastName} avatarUrl={m.avatarUrl} />
               <span className="min-w-0 flex-[1_1_200px]">
                 <span className="block font-semibold">
                   {m.firstName} {m.lastName}

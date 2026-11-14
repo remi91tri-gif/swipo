@@ -5,6 +5,7 @@ import { isDemo } from "./env";
 import { demoAgentDay, demoAgentSession, demoDashboard, demoMembers, demoSession } from "./demo";
 import { createClient } from "./supabase/server";
 import { todayLabel } from "./format";
+import { avatarUrl } from "./avatar";
 import type { AgentDay, Billing, Dashboard, JobStatus, JobSummary, Member, Session, TeamNow } from "./types";
 
 type MemberRow = {
@@ -17,9 +18,10 @@ type MemberRow = {
   email: string | null;
   role: Member["role"];
   active: boolean;
+  avatar_path: string | null;
 };
 
-const MEMBER_COLUMNS = "id, company_id, user_id, first_name, last_name, phone, email, role, active";
+const MEMBER_COLUMNS = "id, company_id, user_id, first_name, last_name, phone, email, role, active, avatar_path";
 const COMPANY_COLUMNS =
   "id, name, plan, subscription_status, trial_ends_at, pilot_until, pilot_discount, billing_interval, current_period_end, cancel_at_period_end, stripe_customer_id";
 
@@ -73,6 +75,7 @@ function toMember(r: MemberRow): Member {
     role: r.role,
     active: r.active,
     hasAccount: !!r.user_id,
+    avatarUrl: avatarUrl(r.avatar_path),
   };
 }
 
@@ -230,7 +233,7 @@ export async function getDashboard(session: Session): Promise<Dashboard> {
       .eq("scheduled_date", parisToday())
       .neq("status", "annule")
       .order("start_time", { nullsFirst: false }),
-    supabase.from("members").select("id, first_name, last_name").eq("company_id", companyId),
+    supabase.from("members").select("id, first_name, last_name, avatar_path").eq("company_id", companyId),
     supabase
       .from("incidents")
       .select("id, job_id, comment, reported_at, reported_by, jobs!inner(title, status, clients(name))")
@@ -250,7 +253,10 @@ export async function getDashboard(session: Session): Promise<Dashboard> {
   for (const r of [jobsRes, membersRes, blockersRes, verifyRes]) if (r.error) throw r.error;
 
   const people = new Map(
-    (membersRes.data ?? []).map((m) => [m.id, { id: m.id as string, firstName: m.first_name as string, lastName: m.last_name as string }]),
+    (membersRes.data ?? []).map((m) => [
+      m.id,
+      { id: m.id as string, firstName: m.first_name as string, lastName: m.last_name as string, avatarUrl: avatarUrl(m.avatar_path as string | null) },
+    ]),
   );
   const rows = (jobsRes.data ?? []) as unknown as JobRow[];
 

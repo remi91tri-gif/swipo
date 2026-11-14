@@ -17,7 +17,7 @@ export default async function GerantLayout({ children }: { children: React.React
   const { member, company, billing } = session;
   // Essai ou abonnement terminé : seule la page Abonnement reste ouverte (les données sont gardées).
   const path = (await headers()).get("x-pathname") ?? "";
-  if (billing.access === "expire" && !path.startsWith("/abonnement")) redirect("/abonnement");
+  if (billing.access === "expire" && !path.startsWith("/abonnement") && !path.startsWith("/parametres")) redirect("/abonnement");
   const trialDays = Math.max(0, Math.ceil((new Date(billing.trialEndsAt).getTime() - Date.now()) / 86400000));
 
   return (
@@ -36,7 +36,7 @@ export default async function GerantLayout({ children }: { children: React.React
         </p>
       )}
       <div className="flex flex-1 flex-wrap">
-        <Sidebar person={{ id: member.id, firstName: member.firstName, lastName: member.lastName }} role={member.role} companyName={company.name} signOut={signOut} />
+        <Sidebar person={{ id: member.id, firstName: member.firstName, lastName: member.lastName, avatarUrl: member.avatarUrl }} role={member.role} companyName={company.name} signOut={signOut} />
         <main className="min-w-0 flex-[999_1_640px] px-4 pt-10 pb-16 sm:px-12">
           <div className="mx-auto flex max-w-[1040px] flex-col gap-8">{children}</div>
         </main>

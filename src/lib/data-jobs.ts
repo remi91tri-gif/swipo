@@ -3,6 +3,7 @@ import { isDemo } from "./env";
 import { demoMembers } from "./demo";
 import { createClient } from "./supabase/server";
 import { signedPhotoUrls } from "./data-agent";
+import { avatarUrl } from "./avatar";
 import type { Client, JobDetail, JobIncident, JobListItem, JobStatus, Member, PlanningDay, Session, Site } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -20,11 +21,11 @@ export function cityOf(address: string | null | undefined) {
   return part.replace(/^\d{5}\s*/, "");
 }
 
-type Person = Pick<Member, "id" | "firstName" | "lastName">;
+type Person = Pick<Member, "id" | "firstName" | "lastName" | "avatarUrl">;
 
 async function peopleMap(supabase: Awaited<ReturnType<typeof createClient>>, companyId: string) {
-  const { data } = await supabase.from("members").select("id, first_name, last_name, role, active").eq("company_id", companyId);
-  return new Map((data ?? []).map((m) => [m.id as string, { id: m.id as string, firstName: m.first_name as string, lastName: m.last_name as string, role: m.role as Member["role"], active: m.active as boolean }]));
+  const { data } = await supabase.from("members").select("id, first_name, last_name, role, active, avatar_path").eq("company_id", companyId);
+  return new Map((data ?? []).map((m) => [m.id as string, { id: m.id as string, firstName: m.first_name as string, lastName: m.last_name as string, role: m.role as Member["role"], active: m.active as boolean, avatarUrl: avatarUrl(m.avatar_path as string | null) }]));
 }
 
 const JOB_LIST_COLUMNS = "id, title, scheduled_date, start_time, duration_min, status, clients(name), sites(address), job_assignments(member_id)";
@@ -285,7 +286,7 @@ export async function getPlanning(session: Session, date: string): Promise<Plann
     ]);
     if (res.error) throw res.error;
     jobs = (res.data as unknown as JobListRow[]).map((r) => toListItem(r, people));
-    members = [...people.values()].filter((m) => m.active).map(({ id, firstName, lastName, role }) => ({ id, firstName, lastName, role }));
+    members = [...people.values()].filter((m) => m.active).map(({ id, firstName, lastName, role, avatarUrl: photo }) => ({ id, firstName, lastName, role, avatarUrl: photo }));
   }
   const rows = members
     .map((member) => ({ member, jobs: jobs.filter((j) => j.team.some((t) => t.id === member.id)) }))

@@ -311,6 +311,16 @@ select pg_temp.fails($$select public.redeem_pilot_code('PILOTE-TEST')$$, 'Le cod
 select pg_temp.check(public.company_access(:'company_b') is null, 'Marc ne voit pas l''état de l''entreprise de Paul');
 reset role;
 
+-- ===== Photos de profil =====
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', false);
+set role authenticated;
+select public.set_my_avatar(:'company_a', :'company_a' || '/' || :'karim' || '/photo.jpg');
+select pg_temp.check((select avatar_path from public.members where id = :'karim') like '%/photo.jpg', 'Karim enregistre sa photo de profil');
+select pg_temp.fails(format($$select public.set_my_avatar(%L, %L)$$, :'company_a', :'company_a' || '/' || :'marc' || '/x.jpg'), 'Karim ne peut pas changer la photo de Marc');
+select pg_temp.check(public.is_my_avatar_path(:'company_a' || '/' || :'karim' || '/a.jpg') and not public.is_my_avatar_path(:'company_a' || '/' || :'marc' || '/a.jpg'),
+  'Karim ne dépose que dans son propre dossier');
+reset role;
+
 -- ===== Effacement complet d'une entreprise (RGPD) =====
 reset role;
 delete from public.companies where id = :'company_a';

@@ -80,12 +80,14 @@ export async function updateMember(
   const firstName = input.firstName.trim();
   const lastName = input.lastName.trim();
   if (!firstName) return { error: "Indiquez le prénom." };
-  if (!isValidFrenchMobile(input.phone)) return { error: "Le portable doit commencer par 06 ou 07." };
-  const phone = toE164(input.phone);
   const allowed: MemberRole[] = ["agent", "chef", "gerant"];
   if (!allowed.includes(input.role)) return { error: "Rôle inconnu." };
   // On ne change pas son propre rôle : l'entreprise garderait sinon peut-être zéro gérant.
   const role = memberId === session.member.id ? session.member.role : input.role;
+  // Le portable sert à envoyer le lien de connexion : obligatoire sauf pour un gérant.
+  const noPhone = !input.phone.trim() && role === "gerant";
+  if (!noPhone && !isValidFrenchMobile(input.phone)) return { error: "Le portable doit commencer par 06 ou 07." };
+  const phone = noPhone ? null : toE164(input.phone);
   if (isDemo) return { member: { firstName, lastName, phone, role } };
 
   const supabase = await createClient();
@@ -100,5 +102,6 @@ export async function updateMember(
     return { error: "La modification n'a pas abouti. Réessayez dans un instant." };
   }
   revalidatePath("/equipe");
+  if (memberId === session.member.id) revalidatePath("/", "layout"); // nom affiché dans la barre latérale
   return { member: { firstName, lastName, phone, role } };
 }

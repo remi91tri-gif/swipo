@@ -8,7 +8,7 @@ import { TRADE_PRESETS, tradePreset } from "@/lib/trades";
 import type { Client, MemberRole } from "@/lib/types";
 import { checkConflicts, createJobAction } from "../actions";
 
-type Person = { id: string; firstName: string; lastName: string; role: MemberRole };
+type Person = { id: string; firstName: string; lastName: string; role: MemberRole; avatarUrl?: string | null };
 
 const input = "h-12 w-full rounded-md border border-line-strong bg-surface-raised px-3.5 text-[15px] text-ink";
 const label = "mb-2 block text-sm text-ink-muted";
@@ -194,7 +194,7 @@ export function NewJobForm({ clients, people, defaultClient, defaultDate }: { cl
                   <label key={m.id} className="cursor-pointer">
                     <input type="checkbox" name="members" value={m.id} checked={on} onChange={() => setMembers((cur) => (on ? cur.filter((x) => x !== m.id) : [...cur, m.id]))} className="peer sr-only" />
                     <span className="inline-flex h-11 items-center gap-2.5 rounded-full border border-line-strong bg-surface-raised pr-4 pl-1.5 text-sm font-semibold text-ink peer-checked:border-azur peer-checked:bg-azur-subtle peer-focus-visible:shadow-[0_0_0_2px_var(--azur)]">
-                      <Avatar id={m.id} firstName={m.firstName} lastName={m.lastName} size={32} />
+                      <Avatar id={m.id} firstName={m.firstName} lastName={m.lastName} avatarUrl={m.avatarUrl} size={32} />
                       {m.firstName} {m.lastName}
                       {m.role !== "agent" && <span className="font-normal text-ink-muted">· {ROLE_LABEL[m.role]}</span>}
                     </span>

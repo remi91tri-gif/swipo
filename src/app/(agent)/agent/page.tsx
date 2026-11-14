@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { signOut } from "@/app/auth-actions";
 import { ThemeButton } from "@/components/theme-toggle";
-import { AgentSignOut, KeepMissionsOffline } from "@/components/offline-agent";
+import { KeepMissionsOffline } from "@/components/offline-agent";
+import Link from "next/link";
+import { Avatar } from "@/components/ui";
 import { NotificationBell } from "@/components/notifications";
 import { DayList } from "./day-list";
 import { getAgentDay, getAgentSession } from "@/lib/data";
@@ -22,7 +23,9 @@ export default async function AgentTodayPage() {
         <div className="flex items-center gap-2">
           <NotificationBell role={session.member.role} placement="agent" />
           <ThemeButton />
-          <AgentSignOut action={signOut} />
+          <Link href="/agent/profil" aria-label="Mon profil" className="rounded-full transition-opacity hover:opacity-80">
+            <Avatar {...session.member} size={36} />
+          </Link>
         </div>
       </header>
 

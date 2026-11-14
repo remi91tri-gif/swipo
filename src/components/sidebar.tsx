@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ClipboardList, CreditCard, Home, LayoutGrid, LogOut, Users } from "lucide-react";
+import { CalendarDays, ClipboardList, CreditCard, Home, LayoutGrid, LogOut, Settings, Users } from "lucide-react";
 import { Avatar, Logo } from "./ui";
 import { ThemeSwitch } from "./theme-toggle";
 import { NotificationBell } from "./notifications";
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/clients", label: "Clients", icon: Home },
   { href: "/equipe", label: "Équipe", icon: Users },
   { href: "/abonnement", label: "Abonnement", icon: CreditCard },
+  { href: "/parametres", label: "Paramètres", icon: Settings },
 ];
 
 export function Sidebar({
@@ -22,7 +23,7 @@ export function Sidebar({
   companyName,
   signOut,
 }: {
-  person: { id: string; firstName: string; lastName: string };
+  person: { id: string; firstName: string; lastName: string; avatarUrl?: string | null };
   role: "gerant" | "chef" | "agent";
   companyName: string;
   signOut: () => Promise<void>;
@@ -55,6 +56,7 @@ export function Sidebar({
       <div className="mt-auto flex flex-col gap-3">
         <ThemeSwitch />
         <div className="flex items-center gap-3 rounded-[14px] bg-surface p-3">
+          <Link href="/parametres" aria-label="Mon profil et mes paramètres" className="flex min-w-0 flex-1 items-center gap-3 rounded-[10px] hover:opacity-80">
           <Avatar {...person} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold">
@@ -62,6 +64,7 @@ export function Sidebar({
             </span>
             <span className="block truncate text-[13px] text-ink-muted">{companyName}</span>
           </span>
+          </Link>
           <form action={signOut}>
             <button type="submit" aria-label="Se déconnecter" className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-hairline hover:text-ink">
               <LogOut aria-hidden size={16} />
