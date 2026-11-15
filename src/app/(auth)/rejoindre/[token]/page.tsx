@@ -35,7 +35,6 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
         </p>
       </div>
       <JoinButton token={token} />
-      <p className="text-[13px] text-ink-muted">Cet appareil restera connecté. Pas de mot de passe à retenir.</p>
     </Card>
   );
 }

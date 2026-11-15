@@ -93,6 +93,7 @@ export async function updateMember(
   if (isDemo) return { member: { firstName, lastName, phone, role } };
 
   const supabase = await createClient();
+  const { data: before } = await supabase.from("members").select("role, user_id").eq("id", memberId).eq("company_id", session.company.id).maybeSingle();
   const { error } = await supabase
     .from("members")
     .update({ first_name: firstName, last_name: lastName, phone, role })
@@ -102,6 +103,12 @@ export async function updateMember(
     if (error.code === "23505") return { error: "Ce numéro est déjà utilisé par une autre personne de l'équipe." };
     if (/Votre offre comprend/.test(error.message)) return { error: error.message };
     return { error: "La modification n'a pas abouti. Réessayez dans un instant." };
+  }
+  // Le rôle a changé : la marque « agent » du compte de connexion suit (elle ouvre ou ferme l'espace gérant).
+  if (before?.user_id && before.role !== role && adminEnabled) {
+    await adminClient()
+      .auth.admin.updateUserById(before.user_id, { app_metadata: { swipo_espace: role === "gerant" ? null : "agent" } })
+      .catch((e) => console.error("marque du compte", e));
   }
   revalidatePath("/equipe");
   if (memberId === session.member.id) revalidatePath("/", "layout"); // nom affiché dans la barre latérale

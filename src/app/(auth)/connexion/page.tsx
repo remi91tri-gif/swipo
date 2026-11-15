@@ -38,7 +38,7 @@ export default async function ConnexionPage({ searchParams }: { searchParams: Pr
         <p>
           Vous êtes agent ?{" "}
           <Link href="/agent/connexion" className="font-semibold">
-            Comment me connecter ?
+            Espace agent
           </Link>
         </p>
       </div>

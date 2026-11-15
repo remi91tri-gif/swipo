@@ -5,7 +5,7 @@ import { isDemo, supabaseAnonKey, supabaseUrl } from "@/lib/env";
 const PUBLIC_PATHS = ["/connexion", "/inscription", "/agent/connexion", "/rejoindre", "/api/stripe", "/api/cron", "/mentions-legales", "/conditions", "/confidentialite", "/mot-de-passe-oublie", "/auth/confirmer"];
 
 /** Seules pages ouvertes à un agent connecté par lien. */
-const AGENT_PATHS = ["/agent", "/rejoindre", "/auth", "/api", "/mentions-legales", "/conditions", "/confidentialite"];
+const AGENT_PATHS = ["/agent", "/rejoindre", "/auth", "/api", "/mot-de-passe-oublie", "/nouveau-mot-de-passe", "/mentions-legales", "/conditions", "/confidentialite"];
 
 /** Rafraîchit la session et renvoie vers la connexion si besoin. */
 export async function updateSession(request: NextRequest) {
@@ -34,10 +34,10 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
 
-  // Session « appareil » d'un agent (connecté par lien, sans e-mail) : uniquement l'espace agent.
-  // Toute autre page (espace gérant, connexion gérant…) le ramène à ses missions.
-  const anonymous = user?.is_anonymous === true;
-  if (anonymous && !AGENT_PATHS.some((p) => path === p || path.startsWith(p + "/"))) {
+  // Agent ou chef d'équipe (session « appareil » sans e-mail, ou compte marqué « agent » par le serveur) :
+  // uniquement l'espace agent. Toute autre page (espace gérant, connexion gérant…) le ramène à ses missions.
+  const fieldUser = user?.is_anonymous === true || (user?.app_metadata as { swipo_espace?: string } | undefined)?.swipo_espace === "agent";
+  if (fieldUser && !AGENT_PATHS.some((p) => path === p || path.startsWith(p + "/"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/agent";
     url.search = "";

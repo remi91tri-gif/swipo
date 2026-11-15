@@ -36,11 +36,11 @@ export async function setNewPassword(next: string, confirm: string): Promise<{ e
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims) return { error: "Le lien a expiré. Demandez-en un nouveau." };
-  const { error } = await supabase.auth.updateUser({ password: next });
+  const { data: updated, error } = await supabase.auth.updateUser({ password: next });
   if (error) {
     if (/same|different/i.test(error.message)) return { error: "Choisissez un mot de passe différent de l'ancien." };
     if (/weak|short|characters/i.test(error.message)) return { error: "Ce mot de passe est trop simple. Choisissez-en un plus long." };
     return { error: "Le mot de passe n'a pas pu être changé. Réessayez dans un instant." };
   }
-  return { url: "/aujourdhui" };
+  return { url: updated.user?.app_metadata?.swipo_espace === "agent" ? "/agent" : "/aujourdhui" };
 }

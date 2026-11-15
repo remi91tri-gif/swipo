@@ -114,17 +114,17 @@ function DisconnectDevice({ member }: { member: Member }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = usePending();
   const ready = useHydrated();
-  if (done) return <span className="text-sm font-semibold text-ink-muted">Téléphone déconnecté. Créez un nouveau lien pour le reconnecter.</span>;
+  if (done) return <span className="text-sm font-semibold text-ink-muted">Accès coupé. Créez un nouveau lien pour le reconnecter.</span>;
   if (!confirming) {
     return (
       <button type="button" onClick={() => setConfirming(true)} className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-critique">
-        <Smartphone aria-hidden size={15} /> Déconnecter son téléphone
+        <Smartphone aria-hidden size={15} /> Couper son accès
       </button>
     );
   }
   return (
     <span className="flex flex-col items-start gap-2 rounded-lg bg-critique-soft p-3">
-      <span className="text-sm text-ink">{member.firstName} n&apos;aura plus accès à Swipo sur ce téléphone, immédiatement.</span>
+      <span className="text-sm text-ink">{member.firstName} n&apos;aura plus accès à Swipo, immédiatement, sur aucun téléphone. Il faudra un nouveau lien pour revenir.</span>
       <span className="flex gap-2">
         <button type="button" onClick={() => setConfirming(false)} className="h-9 rounded-md border border-line-strong bg-surface-raised px-3 text-sm font-semibold text-ink">Annuler</button>
         <button
@@ -140,7 +140,7 @@ function DisconnectDevice({ member }: { member: Member }) {
           }
           className="h-9 rounded-md bg-critique px-3 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {pending ? "…" : "Déconnecter"}
+          {pending ? "…" : "Couper l'accès"}
         </button>
       </span>
       {error && <span className="text-sm text-critique">{error}</span>}

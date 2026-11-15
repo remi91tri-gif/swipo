@@ -393,6 +393,25 @@ set role authenticated;
 select pg_temp.fails($$select public.delete_my_account()$$, 'Un gérant passe par la suppression de l''entreprise');
 reset role;
 
+-- ===== Accès e-mail d'un agent, créé avec son lien =====
+reset role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+insert into public.members (company_id, first_name, role, phone) values (:'company_a', 'Sami', 'agent', '+33677889900') returning id as sami \gset
+select public.create_invite_link(:'sami') as lien_sami \gset
+select pg_temp.fails(format($$select public.claim_invite_for(%L, '00000000-0000-0000-0000-0000000000f1')$$, :'lien_sami'), 'Un navigateur ne peut pas rattacher un compte lui-même');
+reset role;
+insert into auth.users (id, email, raw_app_meta_data) values ('00000000-0000-0000-0000-0000000000f1', 'sami@exemple.fr', '{"swipo_espace":"agent"}');
+set role service_role;
+select pg_temp.check(public.claim_invite_for(:'lien_sami', '00000000-0000-0000-0000-0000000000f1') = 'agent', 'Le serveur rattache le compte e-mail de Sami à sa fiche');
+reset role;
+select pg_temp.check((select email from public.members where id = :'sami') = 'sami@exemple.fr', 'Son e-mail apparaît sur sa fiche');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select public.disconnect_member(:'sami');
+reset role;
+select pg_temp.check(not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000f1'), 'Couper l''accès de Sami supprime son compte d''agent');
+
 -- ===== Adresse : rue, code postal, ville =====
 reset role;
 insert into public.sites (company_id, client_id, street, postal_code, city, address) values (:'company_a', :'client', ' 18 bd de Cimiez ', '06000', 'Nice', '') returning id as site_cp \gset

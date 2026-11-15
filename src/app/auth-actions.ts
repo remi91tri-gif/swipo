@@ -28,9 +28,10 @@ export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   if (isDemo) redirect("/aujourdhui");
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: authError(error.message), fields: { email } };
-  redirect("/aujourdhui");
+  // Un compte d'agent ou de chef d'équipe va toujours dans l'espace agent.
+  redirect(data.user?.app_metadata?.swipo_espace === "agent" ? "/agent" : "/aujourdhui");
 }
 
 export async function signUp(_: FormState, fd: FormData): Promise<FormState> {
