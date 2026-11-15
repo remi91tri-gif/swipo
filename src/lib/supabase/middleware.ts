@@ -2,7 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isDemo, supabaseAnonKey, supabaseUrl } from "@/lib/env";
 
-const PUBLIC_PATHS = ["/connexion", "/inscription", "/agent/connexion", "/rejoindre", "/api/stripe", "/mentions-legales", "/conditions", "/confidentialite", "/mot-de-passe-oublie", "/auth/confirmer"];
+const PUBLIC_PATHS = ["/connexion", "/inscription", "/agent/connexion", "/rejoindre", "/api/stripe", "/api/cron", "/mentions-legales", "/conditions", "/confidentialite", "/mot-de-passe-oublie", "/auth/confirmer"];
+
+/** Seules pages ouvertes à un agent connecté par lien. */
+const AGENT_PATHS = ["/agent", "/rejoindre", "/auth", "/api", "/mentions-legales", "/conditions", "/confidentialite"];
 
 /** Rafraîchit la session et renvoie vers la connexion si besoin. */
 export async function updateSession(request: NextRequest) {
@@ -30,6 +33,16 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims ?? null;
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
+
+  // Session « appareil » d'un agent (connecté par lien, sans e-mail) : uniquement l'espace agent.
+  // Toute autre page (espace gérant, connexion gérant…) le ramène à ses missions.
+  const anonymous = user?.is_anonymous === true;
+  if (anonymous && !AGENT_PATHS.some((p) => path === p || path.startsWith(p + "/"))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/agent";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
 
   // Déjà connecté : la page de connexion mène directement à son espace.
   if (user && (path === "/connexion" || path === "/inscription")) {

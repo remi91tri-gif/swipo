@@ -246,13 +246,17 @@ select pg_temp.check((select finished_at from public.jobs where id = :'job3') <=
 reset role;
 
 -- ===== Lot 7 : liens d'invitation =====
-insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000a9', null);
+insert into auth.users (id, email, is_anonymous) values ('00000000-0000-0000-0000-0000000000a9', null, true);
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
 set role authenticated;
 insert into public.members (company_id, first_name, role) values (:'company_a', 'Inès', 'agent') returning id as ines \gset
 select public.create_invite_link(:'ines') as lien \gset
 select pg_temp.check(length(:'lien') = 64, 'Marc obtient un lien d''invitation pour Inès');
+reset role;
 select pg_temp.check((select invite_hash from public.members where id = :'ines') <> :'lien', 'Seule l''empreinte du lien est gardée');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select pg_temp.fails($$select invite_hash from public.members$$, 'L''équipe ne lit pas les empreintes des liens');
 reset role;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', false);
 set role authenticated;
@@ -263,12 +267,32 @@ set role anon;
 select pg_temp.check((select first_name from public.invite_info(:'lien')) = 'Inès', 'Avant de rejoindre, on voit le prénom et l''entreprise');
 select pg_temp.check((select count(*) from public.invite_info('faux')) = 0, 'Un faux lien ne montre rien');
 reset role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a2', false);
+set role authenticated;
+select pg_temp.fails(format($$select public.claim_invite(%L)$$, :'lien'), 'Un compte déjà identifié (Karim) ne peut pas utiliser le lien d''une autre fiche');
+reset role;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a9', false);
 set role authenticated;
 select pg_temp.check(public.claim_invite(:'lien') = 'agent', 'L''appareil d''Inès rejoint l''équipe avec le lien');
 select pg_temp.check((select count(*) from public.jobs) >= 0 and public.my_member_id(:'company_a') = :'ines', 'Inès est reconnue comme membre de A');
 select pg_temp.fails(format($$select public.claim_invite(%L)$$, :'lien'), 'Le lien ne sert qu''une fois');
 reset role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+update public.members set role = 'gerant' where id = :'ines';
+reset role;
+select pg_temp.check((select user_id from public.members where id = :'ines') is null, 'Une agente connectée par lien qui devient gérante perd cette session');
+update public.members set role = 'agent', user_id = '00000000-0000-0000-0000-0000000000a9' where id = :'ines';
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a9', false);
+set role authenticated;
+select pg_temp.fails(format($$select public.disconnect_member(%L)$$, :'ines'), 'Inès ne peut pas déconnecter un membre');
+reset role;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
+select public.disconnect_member(:'ines');
+reset role;
+select pg_temp.check((select user_id from public.members where id = :'ines') is null, 'Marc déconnecte le téléphone d''Inès');
+select pg_temp.check(not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000a9'), 'La session de son téléphone est supprimée');
 
 -- ===== Lot 7 : abonnement, limites, pilotes =====
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
@@ -293,8 +317,7 @@ select pg_temp.check((select plan || '/' || billing_interval from public.compani
 insert into public.members (company_id, first_name, role) values (:'company_a', 'Julie', 'gerant');
 select pg_temp.check((select count(*) from public.members where company_id = :'company_a' and role = 'gerant') = 2, 'Offre Pro : un 2e gérant est possible');
 select pg_temp.fails(format($$insert into public.members (company_id, first_name, role) values (%L, 'Paul', 'gerant')$$, :'company_a'), 'Offre Pro : pas de 3e gérant');
-select public.create_invite_link(id) is not null as ok from public.members where company_id = :'company_a' and first_name = 'Julie' \gset
-select pg_temp.check(:'ok', 'Marc peut inviter Julie, la 2e gérante, par lien');
+select pg_temp.fails(format($$select public.create_invite_link(id) from public.members where company_id = %L and first_name = 'Julie'$$, :'company_a'), 'Une gérante n''est jamais invitée par lien');
 select pg_temp.fails(format($$select public.create_invite_link(%L)$$, :'marc'), 'Marc ne peut pas créer de lien pour lui-même');
 reset role;
 insert into public.pilot_codes (code, uses_left, pilot_days) values ('PILOTE-TEST', 1, 90);
@@ -357,6 +380,8 @@ select public.delete_my_company('nettoie tout');
 reset role;
 select pg_temp.check(not exists (select 1 from public.companies where id = :'company_c'), 'Zoé supprime son entreprise (même sans paiement)');
 select pg_temp.check(not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000c1'), 'Son compte de connexion est supprimé aussi');
+insert into auth.users (id, is_anonymous) values ('00000000-0000-0000-0000-0000000000a9', true);
+update public.members set user_id = '00000000-0000-0000-0000-0000000000a9' where id = :'ines';
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a9', false);
 set role authenticated;
 select public.delete_my_account();
@@ -367,6 +392,50 @@ select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1
 set role authenticated;
 select pg_temp.fails($$select public.delete_my_account()$$, 'Un gérant passe par la suppression de l''entreprise');
 reset role;
+
+-- ===== Conservation des données : 90 jours après la fin de l'accès =====
+reset role;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000d1', 'luc@exemple.fr');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000d1', false);
+set role authenticated;
+select public.create_company('Luc Nettoyage', 'Luc', 'R', '0600000009', array['vitrerie']) as company_d \gset
+select pg_temp.fails($$select * from public.retention_due()$$, 'Un utilisateur ne peut pas lancer le nettoyage');
+reset role;
+set role service_role;
+select pg_temp.check(not exists (select 1 from public.retention_due() where company_id = :'company_d'), 'Pendant l''essai, rien n''est prévu');
+reset role;
+update public.companies set trial_ends_at = now() - interval '60 days' where id = :'company_d';
+set role service_role;
+select pg_temp.check(not exists (select 1 from public.retention_due() where company_id = :'company_d'), '60 jours après la fin : pas encore de rappel');
+reset role;
+update public.companies set trial_ends_at = now() - interval '80 days' where id = :'company_d';
+set role service_role;
+select pg_temp.check((select action || ' ' || array_to_string(emails, ',') from public.retention_due() where company_id = :'company_d') = 'prevenir luc@exemple.fr',
+  '80 jours après : le gérant doit être prévenu par e-mail');
+select pg_temp.fails(format($$select public.retention_delete(%L)$$, :'company_d'), 'Sans rappel, aucune suppression');
+select public.retention_mark_notified(:'company_d');
+select pg_temp.check(not exists (select 1 from public.retention_due() where company_id = :'company_d'), 'Le rappel ne part qu''une fois');
+reset role;
+update public.companies set trial_ends_at = now() - interval '95 days', retention_notice_at = now() - interval '5 days' where id = :'company_d';
+set role service_role;
+select pg_temp.check(not exists (select 1 from public.retention_due() where company_id = :'company_d'), 'Toujours au moins 13 jours entre le rappel et la suppression');
+reset role;
+update public.companies set retention_notice_at = now() - interval '15 days' where id = :'company_d';
+update public.companies set pilot_until = '2999-12-31' where id = :'company_b';
+set role service_role;
+select pg_temp.check((select action from public.retention_due() where company_id = :'company_d') = 'supprimer', 'Après 90 jours et le rappel : à supprimer');
+select pg_temp.check(not exists (select 1 from public.retention_due() where company_id = :'company_b'), 'Une entreprise gratuite pour toujours n''est jamais concernée');
+select public.retention_delete(:'company_d');
+reset role;
+select pg_temp.check(not exists (select 1 from public.companies where id = :'company_d')
+  and not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000d1'), 'L''entreprise et le compte du gérant sont supprimés');
+insert into auth.users (id, is_anonymous, created_at) values ('00000000-0000-0000-0000-0000000000e1', true, now() - interval '8 days'),
+  ('00000000-0000-0000-0000-0000000000e2', true, now());
+set role service_role;
+select public.purge_orphan_devices();
+reset role;
+select pg_temp.check(not exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000e1')
+  and exists (select 1 from auth.users where id = '00000000-0000-0000-0000-0000000000e2'), 'Les sessions d''appareil orphelines de plus de 7 jours sont supprimées');
 
 -- ===== Effacement complet d'une entreprise (RGPD) =====
 reset role;

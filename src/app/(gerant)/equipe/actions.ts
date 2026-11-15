@@ -5,6 +5,8 @@ import { getSession } from "@/lib/data";
 import { isDemo } from "@/lib/env";
 import { isValidFrenchMobile, toE164 } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import { adminClient, adminEnabled } from "@/lib/supabase/admin";
+import { SITE_URL, emailEnabled, emailLayout, sendEmail } from "@/lib/email";
 import type { Member, MemberRole } from "@/lib/types";
 
 export type AddMemberState = { error?: string; added?: Member; fields?: Record<string, string> } | undefined;
@@ -104,4 +106,68 @@ export async function updateMember(
   revalidatePath("/equipe");
   if (memberId === session.member.id) revalidatePath("/", "layout"); // nom affiché dans la barre latérale
   return { member: { firstName, lastName, phone, role } };
+}
+
+/** Déconnecte à distance le téléphone d'un agent ou chef d'équipe (perdu, volé, départ). */
+export async function disconnectMember(memberId: string): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session || session.member.role !== "gerant") return { error: "Seul le gérant peut déconnecter un membre." };
+  if (isDemo) return {};
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("disconnect_member", { p_member: memberId });
+  if (error) return { error: "La déconnexion n'a pas abouti. Réessayez." };
+  revalidatePath("/equipe");
+  return {};
+}
+
+/**
+ * Invite un autre gérant par e-mail : il reçoit un lien pour choisir son mot de passe.
+ * (Un gérant a toujours un compte e-mail + mot de passe, jamais un lien de téléphone.)
+ */
+export async function inviteManager(memberId: string, rawEmail: string): Promise<{ error?: string; ok?: boolean }> {
+  const session = await getSession();
+  if (!session || session.member.role !== "gerant") return { error: "Seul le gérant peut inviter." };
+  const email = rawEmail.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Saisissez une adresse e-mail valide." };
+  if (isDemo) return { ok: true };
+  if (!adminEnabled || !emailEnabled) return { error: "L'invitation par e-mail n'est pas encore activée sur ce site." };
+
+  // La fiche doit être un gérant de MON entreprise, pas encore relié à un compte.
+  const supabase = await createClient();
+  const { data: m } = await supabase.from("members").select("id, first_name, role, user_id, active").eq("id", memberId).eq("company_id", session.company.id).maybeSingle();
+  if (!m || m.role !== "gerant" || !m.active) return { error: "Gérant introuvable." };
+  if (m.user_id) return { error: "Ce gérant a déjà son compte." };
+
+  const admin = adminClient();
+  const { data: link, error } = await admin.auth.admin.generateLink({ type: "invite", email });
+  if (error || !link?.user) {
+    if (/already|registered|exists/i.test(error?.message ?? "")) return { error: "Cette adresse a déjà un compte Swipo. Utilisez une autre adresse." };
+    console.error("invitation gérant", error);
+    return { error: "L'invitation n'a pas pu être créée. Réessayez." };
+  }
+  const { error: linkErr } = await admin.from("members").update({ user_id: link.user.id, email }).eq("id", memberId).is("user_id", null);
+  if (linkErr) {
+    await admin.auth.admin.deleteUser(link.user.id).catch(() => null);
+    return { error: "L'invitation n'a pas pu être créée. Réessayez." };
+  }
+  const url = `${SITE_URL}/auth/confirmer?token_hash=${link.properties.hashed_token}&type=invite&next=/nouveau-mot-de-passe`;
+  try {
+    await sendEmail(
+      email,
+      `${session.company.name} vous invite sur Swipo`,
+      emailLayout({
+        title: `Bonjour ${m.first_name},`,
+        paragraphs: [`${session.member.firstName} vous invite à gérer ${session.company.name} sur Swipo, avec vous comme gérant.`, "Cliquez sur le bouton pour choisir votre mot de passe. Vous vous connecterez ensuite avec cette adresse e-mail."],
+        button: { label: "Choisir mon mot de passe", url },
+        foot: "Ce lien est valable 24 heures. Vous ne connaissez pas cette entreprise ? Ignorez cet e-mail.",
+      }),
+    );
+  } catch (e) {
+    console.error("envoi invitation gérant", e);
+    await admin.from("members").update({ user_id: null }).eq("id", memberId);
+    await admin.auth.admin.deleteUser(link.user.id).catch(() => null);
+    return { error: "L'e-mail n'a pas pu être envoyé. Réessayez." };
+  }
+  revalidatePath("/equipe");
+  return { ok: true };
 }

@@ -13,7 +13,8 @@ export const dynamic = "force-dynamic";
 export default async function GerantLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/connexion");
-  if (session.member.role === "agent") redirect("/agent");
+  // L'espace gérant est réservé aux gérants : agents et chefs d'équipe ont leur propre espace.
+  if (session.member.role !== "gerant") redirect("/agent");
   const { member, company, billing } = session;
   // Essai ou abonnement terminé : seule la page Abonnement reste ouverte (les données sont gardées).
   const path = (await headers()).get("x-pathname") ?? "";

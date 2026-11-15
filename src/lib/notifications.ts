@@ -55,7 +55,8 @@ function when(date: string | null, time: string | null) {
 export function describe(n: Notif, role: Role) {
   const job = n.job?.title ?? "Chantier";
   const place = n.job?.client ?? job;
-  const href = n.jobId ? (role === "agent" ? `/agent/mission/${n.jobId}` : `/chantiers/${n.jobId}`) : role === "agent" ? "/agent" : "/aujourdhui";
+  const field = role !== "gerant";
+  const href = n.jobId ? (field ? `/agent/mission/${n.jobId}` : `/chantiers/${n.jobId}`) : field ? "/agent" : "/aujourdhui";
   const t: Record<string, { title: string; body: string; tone: "azur" | "critique" | "reprise" | "valide" | "soleil" }> = {
     mission_assignee: { title: "Nouvelle mission", body: [job, n.job?.client, when(n.job?.date ?? null, n.job?.time ?? null)].filter(Boolean).join(" · "), tone: "azur" },
     chantier_termine: { title: "Chantier terminé", body: place, tone: "valide" },
@@ -70,7 +71,7 @@ export function describe(n: Notif, role: Role) {
   };
   // Mission retirée ou annulée : l'agent ne voit plus la fiche, on le ramène à sa journée.
   const gone = n.type === "mission_retiree" || n.type === "mission_annulee";
-  return { ...(t[n.type] ?? { title: "Notification", body: job, tone: "azur" as const }), href: gone && role === "agent" ? "/agent" : href };
+  return { ...(t[n.type] ?? { title: "Notification", body: job, tone: "azur" as const }), href: gone && field ? "/agent" : href };
 }
 
 export function timeAgo(iso: string) {

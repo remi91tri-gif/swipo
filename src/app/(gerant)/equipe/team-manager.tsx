@@ -3,11 +3,11 @@
 import { usePending } from "@/lib/use-pending";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useHydrated } from "@/lib/use-hydrated";
-import { Check, Copy, Link2, MessageCircle, Pencil, Send, UserPlus } from "lucide-react";
+import { Check, Copy, Link2, Mail, MessageCircle, Pencil, Send, Smartphone, UserPlus } from "lucide-react";
 import { Avatar, Button, Card, CardTitle, Field, FormError } from "@/components/ui";
 import { ROLE_LABEL, displayPhone } from "@/lib/format";
 import type { Member } from "@/lib/types";
-import { addMember, createInviteLink, setMemberActive, updateMember } from "./actions";
+import { addMember, createInviteLink, disconnectMember, inviteManager, setMemberActive, updateMember } from "./actions";
 
 function inviteText(m: Member, companyName: string, link: string) {
   return `Bonjour ${m.firstName}, ${companyName} vous invite sur Swipo pour voir vos chantiers. Ouvrez ce lien sur votre téléphone pour vous connecter (valable 7 jours) : ${link}`;
@@ -71,6 +71,79 @@ function InviteActions({ member, origin, companyName, again }: { member: Member;
       </span>
       <span className="text-[13px] text-ink-muted">Lien personnel, valable 7 jours et une seule fois.</span>
       <input readOnly aria-label={`Lien de connexion de ${member.firstName}`} value={link} className="sr-only" data-invite-link />
+    </span>
+  );
+}
+
+/** Un autre gérant est invité par e-mail : il choisira son mot de passe. */
+function ManagerInvite({ member }: { member: Member }) {
+  const [email, setEmail] = useState(member.email ?? "");
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = usePending();
+  const ready = useHydrated();
+  if (sent) return <span className="text-sm font-semibold text-valide">Invitation envoyée à {email.trim()}</span>;
+  return (
+    <form
+      className="flex flex-col items-start gap-1.5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void start(async () => {
+          setError(null);
+          const res = await inviteManager(member.id, email);
+          if (res.error) setError(res.error);
+          else setSent(true);
+        });
+      }}
+    >
+      <span className="flex flex-wrap gap-2">
+        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail du gérant" aria-label={`E-mail de ${member.firstName}`} className="h-9 w-[220px] rounded-md border border-line-strong bg-surface-raised px-3 text-sm text-ink" />
+        <button type="submit" disabled={pending || !ready} className="inline-flex h-9 items-center gap-2 rounded-md bg-azur px-3 text-sm font-semibold text-on-azur hover:bg-azur-strong disabled:opacity-60">
+          <Mail aria-hidden size={15} /> {pending ? "Envoi…" : "Inviter par e-mail"}
+        </button>
+      </span>
+      {error && <span className="text-sm text-critique">{error}</span>}
+    </form>
+  );
+}
+
+/** Déconnecte à distance le téléphone d'un agent (perdu, volé, départ). */
+function DisconnectDevice({ member }: { member: Member }) {
+  const [confirming, setConfirming] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = usePending();
+  const ready = useHydrated();
+  if (done) return <span className="text-sm font-semibold text-ink-muted">Téléphone déconnecté. Créez un nouveau lien pour le reconnecter.</span>;
+  if (!confirming) {
+    return (
+      <button type="button" onClick={() => setConfirming(true)} className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-ink-muted hover:bg-hairline hover:text-critique">
+        <Smartphone aria-hidden size={15} /> Déconnecter son téléphone
+      </button>
+    );
+  }
+  return (
+    <span className="flex flex-col items-start gap-2 rounded-lg bg-critique-soft p-3">
+      <span className="text-sm text-ink">{member.firstName} n&apos;aura plus accès à Swipo sur ce téléphone, immédiatement.</span>
+      <span className="flex gap-2">
+        <button type="button" onClick={() => setConfirming(false)} className="h-9 rounded-md border border-line-strong bg-surface-raised px-3 text-sm font-semibold text-ink">Annuler</button>
+        <button
+          type="button"
+          disabled={pending || !ready}
+          onClick={() =>
+            start(async () => {
+              setError(null);
+              const res = await disconnectMember(member.id);
+              if (res.error) setError(res.error);
+              else setDone(true);
+            })
+          }
+          className="h-9 rounded-md bg-critique px-3 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {pending ? "…" : "Déconnecter"}
+        </button>
+      </span>
+      {error && <span className="text-sm text-critique">{error}</span>}
     </span>
   );
 }
@@ -186,13 +259,18 @@ export function TeamManager({ initialTeam, origin, companyName, meId }: { initia
               {m.active && m.id !== meId && !m.hasAccount && (
                 <span className="flex flex-col items-start gap-2">
                   <span className="rounded-full bg-soleil-soft px-2.5 py-0.5 text-[13px] font-semibold text-soleil-ink">Invitation à envoyer</span>
-                  <InviteActions member={m} origin={origin} companyName={companyName} />
+                  {m.role === "gerant" ? <ManagerInvite member={m} /> : <InviteActions member={m} origin={origin} companyName={companyName} />}
                 </span>
               )}
               {m.active && m.hasAccount && m.id !== meId && (
                 <span className="flex flex-col items-start gap-2">
-                  <span className="rounded-full bg-valide-soft px-2.5 py-0.5 text-[13px] font-semibold text-valide">Connecté</span>
-                  <InviteActions member={m} origin={origin} companyName={companyName} again />
+                  <span className="rounded-full bg-valide-soft px-2.5 py-0.5 text-[13px] font-semibold text-valide">{m.role === "gerant" ? "Compte créé" : "Connecté"}</span>
+                  {m.role !== "gerant" && (
+                    <span className="flex flex-wrap gap-1">
+                      <InviteActions member={m} origin={origin} companyName={companyName} again />
+                      <DisconnectDevice member={m} />
+                    </span>
+                  )}
                 </span>
               )}
               <span className="ml-auto flex items-center gap-1">

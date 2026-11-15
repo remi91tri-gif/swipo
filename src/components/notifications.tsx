@@ -171,7 +171,7 @@ export function NotificationBell({ role, placement }: { role: Role; placement: "
               <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
                 <span className="flex size-12 items-center justify-center rounded-full bg-hairline text-ink-muted"><Bell aria-hidden size={20} /></span>
                 <p className="font-semibold">Rien de nouveau</p>
-                <p className="text-sm text-ink-muted">{role === "agent" ? "Vos nouvelles missions et les réponses de votre gérant s'afficheront ici." : "Imprévus, chantiers terminés et retards s'afficheront ici, en direct."}</p>
+                <p className="text-sm text-ink-muted">{role !== "gerant" ? "Vos nouvelles missions et les réponses de votre gérant s'afficheront ici." : "Imprévus, chantiers terminés et retards s'afficheront ici, en direct."}</p>
               </div>
             ) : (
               items.map((n) => <Row key={n.id} n={n} role={role} onOpen={() => setOpen(false)} />)

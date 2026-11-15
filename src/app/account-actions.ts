@@ -4,22 +4,10 @@ import { getAgentSession, getSession } from "@/lib/data";
 import { isDemo } from "@/lib/env";
 import { stripe, stripeEnabled } from "@/lib/billing/stripe";
 import { createClient } from "@/lib/supabase/server";
+import { emptyFolder, removeCompanyFiles } from "@/lib/storage-cleanup";
 
 type Result = { error?: string; url?: string };
 const DEMO: Result = { error: "Mode démonstration : rien n'est supprimé." };
-
-type Sb = Awaited<ReturnType<typeof createClient>>;
-
-/** Supprime tous les fichiers d'un dossier du stockage (photos, logo, photos de profil). */
-async function emptyFolder(supabase: Sb, bucket: string, folder: string) {
-  for (let i = 0; i < 50; i++) {
-    const { data } = await supabase.storage.from(bucket).list(folder, { limit: 100 });
-    const files = (data ?? []).filter((f) => f.id).map((f) => `${folder}/${f.name}`);
-    if (!files.length) return;
-    const { error } = await supabase.storage.from(bucket).remove(files);
-    if (error) return;
-  }
-}
 
 /**
  * Gérant : supprime définitivement l'entreprise, ses chantiers, photos, clients, l'équipe et les comptes.
@@ -48,13 +36,7 @@ export async function deleteMyCompany(confirmName: string): Promise<Result> {
   }
 
   // 2. Fichiers : photos de chantier, logo, photos de profil.
-  const [{ data: jobs }, { data: members }] = await Promise.all([
-    supabase.from("jobs").select("id").eq("company_id", companyId),
-    supabase.from("members").select("id").eq("company_id", companyId),
-  ]);
-  for (const j of jobs ?? []) await emptyFolder(supabase, "photos", `${companyId}/${j.id}`);
-  await emptyFolder(supabase, "logos", companyId);
-  for (const m of members ?? []) await emptyFolder(supabase, "avatars", `${companyId}/${m.id}`);
+  await removeCompanyFiles(supabase, companyId);
 
   // 3. Données et comptes.
   const { error } = await supabase.rpc("delete_my_company", { p_confirm: confirmName });

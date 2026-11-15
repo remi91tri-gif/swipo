@@ -29,7 +29,8 @@ export function JoinButton({ token }: { token: string }) {
         await sb.auth.signOut({ scope: "local" });
         throw new Error(/plus valable/.test(claimErr.message) ? claimErr.message : "Le lien n'a pas pu être utilisé. Réessayez.");
       }
-      window.location.href = role === "agent" ? "/agent" : "/aujourdhui";
+      void role;
+      window.location.href = "/agent";
     } catch (e) {
       setError((e as Error).message);
       setPending(false);
