@@ -68,7 +68,7 @@ export function Sidebar({
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-ink-muted hover:bg-hairline max-[871px]:py-3 max-[871px]:text-[16px] hover:text-ink aria-[current=page]:bg-azur-subtle aria-[current=page]:font-semibold aria-[current=page]:text-azur"
+              className="relative flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-ink-muted transition-colors hover:text-ink max-[871px]:py-3 max-[871px]:text-[16px] aria-[current=page]:font-semibold aria-[current=page]:text-ink aria-[current=page]:before:absolute aria-[current=page]:before:top-1/2 aria-[current=page]:before:-left-1 aria-[current=page]:before:h-px aria-[current=page]:before:w-3 aria-[current=page]:before:bg-soleil"
             >
               <Icon aria-hidden size={18} strokeWidth={1.75} />
               {label}
@@ -85,7 +85,7 @@ export function Sidebar({
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className="flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-sm text-ink-muted hover:bg-hairline hover:text-ink max-[871px]:py-2.5 aria-[current=page]:bg-azur-subtle aria-[current=page]:font-semibold aria-[current=page]:text-azur"
+                className="flex items-center gap-2.5 rounded-[8px] px-3 py-2 text-sm text-ink-muted hover:text-ink max-[871px]:py-2.5 aria-[current=page]:font-semibold aria-[current=page]:text-ink"
               >
                 <Icon aria-hidden size={16} strokeWidth={1.75} />
                 {label}

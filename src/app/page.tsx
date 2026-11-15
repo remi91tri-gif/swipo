@@ -175,8 +175,8 @@ export default function Home() {
         <section className="relative">
           <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[720px] bg-[radial-gradient(60%_55%_at_50%_0%,var(--azur-subtle),transparent_75%)]" />
           <div className="relative mx-auto flex max-w-[1120px] flex-col items-center px-5 pt-14 text-center sm:px-6 sm:pt-24">
-            <h1 className="rise max-w-[860px] font-display text-[44px] leading-[48px] font-semibold tracking-[-0.045em] sm:text-[76px] sm:leading-[80px]" style={delay(60)}>
-              Vos chantiers suivis <span className="text-azur">d&apos;un geste.</span>
+            <h1 className="rise max-w-[860px] font-display text-[44px] leading-[48px] font-semibold tracking-[-0.03em] sm:text-[76px] sm:leading-[80px]" style={delay(60)}>
+              Vos chantiers suivis <span className="italic text-soleil">d&apos;un geste.</span>
             </h1>
             <p className={`rise mt-6 max-w-[600px] ${LEAD}`} style={delay(200)}>
               Le planning, les missions de vos agents, les photos avant/après et les comptes rendus clients. Au même endroit.

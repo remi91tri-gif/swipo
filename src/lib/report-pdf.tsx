@@ -15,7 +15,7 @@ Font.register({
 Font.register({ family: "Sora", src: path.join(fonts, "sora-latin-600-normal.woff"), fontWeight: 600 });
 Font.registerHyphenationCallback((word) => [word]);
 
-const C = { ink: "#12202b", muted: "#556673", line: "#e2e7ec", azur: "#1663a6", azurSoft: "#eef4fb", soleilSoft: "#fdf1d3", soleilInk: "#6b4a00", valide: "#1a6b43" };
+const C = { ink: "#1b2430", muted: "#6e6759", line: "#e3ddd2", azur: "#1b2430", azurSoft: "#f3eee6", soleilSoft: "#f1e8d6", soleilInk: "#6e5526", valide: "#3f6b4e" };
 
 const s = StyleSheet.create({
   page: { paddingTop: 44, paddingBottom: 64, paddingHorizontal: 44, fontFamily: "Figtree", fontSize: 10.5, color: C.ink, lineHeight: 1.45 },

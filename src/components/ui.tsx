@@ -45,8 +45,8 @@ export function PageHeader({ eyebrow, title, lead, action }: { eyebrow?: string;
   return (
     <div className="flex flex-wrap items-end justify-between gap-5">
       <div className="flex flex-col gap-1.5">
-        {eyebrow && <p className="text-[13px] font-semibold tracking-[0.06em] text-ink-muted">{eyebrow}</p>}
-        <h1 className="font-display text-[28px] leading-[34px] sm:text-[34px] sm:leading-[42px] font-semibold tracking-[-0.025em]">{title}</h1>
+        {eyebrow && <p className="text-[12px] font-semibold tracking-[0.18em] text-soleil uppercase">{eyebrow}</p>}
+        <h1 className="font-display text-[34px] leading-[40px] font-normal tracking-[-0.02em] sm:text-[48px] sm:leading-[54px]">{title}</h1>
         {lead && <p className="text-base text-ink-muted">{lead}</p>}
       </div>
       {action}
@@ -58,7 +58,7 @@ export function PageHeader({ eyebrow, title, lead, action }: { eyebrow?: string;
 const TONE: Record<(typeof STATUS)[JobStatus]["tone"], string> = {
   neutral: "bg-neutral-soft text-ink-muted",
   outline: "bg-surface text-ink-muted border border-line-strong",
-  azur: "bg-azur-soft text-azur",
+  azur: "bg-info-soft text-info",
   critique: "bg-critique-soft text-critique",
   reprise: "bg-reprise-soft text-reprise",
   valide: "bg-valide-soft text-valide",
@@ -71,7 +71,7 @@ export function StatusPill({ status }: { status: JobStatus }) {
 }
 
 // --- Avatars -----------------------------------------------------------------
-const AVATAR = { azur: "bg-azur-soft text-azur", valide: "bg-valide-soft text-valide", reprise: "bg-reprise-soft text-reprise" };
+const AVATAR = { azur: "bg-info-soft text-info", valide: "bg-valide-soft text-valide", reprise: "bg-reprise-soft text-reprise" };
 
 export function Avatar({
   id,
@@ -173,7 +173,7 @@ export function FormError({ message }: { message?: string | null }) {
 
 // --- Logo ----------------------------------------------------------------------
 export function Logo({ height = 28 }: { height?: number }) {
-  const width = Math.round((height * 226.4) / 64);
+  const width = Math.round((height * 194) / 64);
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}

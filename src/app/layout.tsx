@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Figtree, Sora } from "next/font/google";
+import { Fraunces, Inter_Tight } from "next/font/google";
 import "./globals.css";
 
-const sora = Sora({ variable: "--font-sora", subsets: ["latin"], weight: ["500", "600", "700"] });
-const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin"], weight: ["400", "500", "600"] });
+// Charte « Maison » : Fraunces (titres, à empattements) et Inter Tight (textes).
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], axes: ["opsz"] });
+const interTight = Inter_Tight({ variable: "--font-inter-tight", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
   title: { default: "Swipo", template: "%s · Swipo" },
@@ -15,8 +16,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f8fa" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f171e" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f2ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#121417" },
   ],
 };
 
@@ -30,7 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${sora.variable} ${figtree.variable}`}>
+      <body className={`${fraunces.variable} ${interTight.variable}`}>
         {children}
         {/* Mesure de la vitesse réelle du site (Vercel Speed Insights, sans cookie). */}
         <SpeedInsights />

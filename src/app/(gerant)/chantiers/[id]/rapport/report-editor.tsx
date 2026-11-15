@@ -262,12 +262,12 @@ export function ReportEditor({ report }: { report: ClientReport }) {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-semibold tracking-[0.12em] text-[#1663a6]">COMPTE RENDU D&apos;INTERVENTION</p>
+              <p className="text-[10px] font-semibold tracking-[0.12em] text-[#1b2430]">COMPTE RENDU D&apos;INTERVENTION</p>
               <p className="text-[11px] text-[#556673]">{when}</p>
             </div>
           </div>
           <p className="mt-7 font-display text-[22px] leading-7 font-semibold tracking-[-0.02em]">{report.title}</p>
-          <span className="mt-2.5 mb-5 block h-0.5 w-10 bg-[#1663a6]" />
+          <span className="mt-2.5 mb-5 block h-0.5 w-10 bg-[#a8874e]" />
           <dl className="grid grid-cols-2 border-t border-[#e2e7ec]">
             {[
               ["CLIENT", report.clientName],

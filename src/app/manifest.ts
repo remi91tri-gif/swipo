@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     // Chacun arrive dans son espace (agent ou gérant), ou sur la connexion.
     start_url: "/ouvrir",
     display: "standalone",
-    background_color: "#f6f7f9",
-    theme_color: "#1663a6",
+    background_color: "#f5f2ec",
+    theme_color: "#1b2430",
     lang: "fr",
     icons: [
       { src: "/brand/icone-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

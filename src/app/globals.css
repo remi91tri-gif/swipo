@@ -2,61 +2,65 @@
 
 /* Swipo — variables de la charte graphique (thème clair par défaut). */
 :root {
-  --surface: #f7f8fa;
-  --surface-raised: #ffffff;
-  --line: #eceff3;
-  --line-strong: #e2e7ec;
-  --hairline: #f0f2f5;
-  --ink: #12202b;
-  --on-ink: #ffffff;
-  --ink-muted: #556673;
-  --azur: #1663a6;
-  --azur-strong: #0f4c82;
-  --azur-soft: #e2eefa;
-  --azur-subtle: #eef4fb;
-  --on-azur: #ffffff;
-  --soleil: #f2b632;
-  --soleil-soft: #fdf1d3;
-  --soleil-ink: #6b4a00;
-  --neutral-soft: #edf2f6;
-  --critique: #b42318;
-  --critique-soft: #fde7e4;
-  --reprise: #a14a07;
-  --reprise-soft: #fdecd8;
-  --valide: #1a6b43;
-  --valide-soft: #def3e7;
-  --shadow-card: 0 1px 2px #12202b0a;
-  --shadow-hero: 0 12px 28px -12px #12202b80;
+  --surface: #f5f2ec;
+  --surface-raised: #fbf9f5;
+  --line: #e3ddd2;
+  --line-strong: #d4ccbe;
+  --hairline: #ece6db;
+  --ink: #1b2430;
+  --on-ink: #f5f2ec;
+  --ink-muted: #6e6759;
+  --azur: #1b2430;
+  --azur-strong: #0d131a;
+  --azur-soft: #e9e2d5;
+  --azur-subtle: #efe9df;
+  --on-azur: #f5f2ec;
+  --soleil: #a8874e;
+  --soleil-soft: #f1e8d6;
+  --soleil-ink: #6e5526;
+  --neutral-soft: #ece6db;
+  --critique: #9e3b2f;
+  --critique-soft: #f5e2dd;
+  --reprise: #8f5a1e;
+  --reprise-soft: #f3e6d3;
+  --valide: #3f6b4e;
+  --valide-soft: #e2ece3;
+  --info: #2d5a86;
+  --info-soft: #e1e9f1;
+  --shadow-card: 0 1px 0 #1b24300a;
+  --shadow-hero: 0 22px 44px -26px #1b243066;
   color-scheme: light;
 }
 
 /* Thème sombre : choisi par l'utilisateur… */
 :root[data-theme="dark"] {
-  --surface: #0f171e;
-  --surface-raised: #17222b;
-  --line: #26333d;
-  --line-strong: #2f3e4a;
-  --hairline: #1f2a33;
-  --ink: #e8f0f6;
-  --on-ink: #0f171e;
-  --ink-muted: #9db0bf;
-  --azur: #6cb0ec;
-  --azur-strong: #9ccbf3;
-  --azur-soft: #10304d;
-  --azur-subtle: #14314b;
-  --on-azur: #0f171e;
-  --soleil: #f6c453;
-  --soleil-soft: #3b2c08;
-  --soleil-ink: #f6c453;
-  --neutral-soft: #1d2a34;
-  --critique: #f97066;
-  --critique-soft: #3d1512;
-  --reprise: #f5a524;
-  --reprise-soft: #3a2408;
-  --valide: #4cc38a;
-  --valide-soft: #0f2e20;
-  --shadow-card: 0 1px 2px #00000040;
-  --shadow-hero: 0 12px 28px -12px #00000099;
+  --surface: #121417;
+  --surface-raised: #181b1f;
+  --line: #262a2f;
+  --line-strong: #343940;
+  --hairline: #1e2125;
+  --ink: #ece6db;
+  --on-ink: #121417;
+  --ink-muted: #a39d91;
+  --azur: #ece6db;
+  --azur-strong: #ffffff;
+  --azur-soft: #2a2721;
+  --azur-subtle: #1f1e1b;
+  --on-azur: #121417;
+  --soleil: #c9a66b;
+  --soleil-soft: #2b2419;
+  --soleil-ink: #d9bc88;
+  --neutral-soft: #22252a;
+  --critique: #e0846f;
+  --critique-soft: #3a1f1a;
+  --reprise: #e0a867;
+  --reprise-soft: #33261a;
+  --valide: #8dbe9a;
+  --valide-soft: #1b2a20;
+  --info: #8db6dd;
+  --info-soft: #1a2633;
+  --shadow-card: 0 1px 0 #00000040;
+  --shadow-hero: 0 22px 44px -26px #000000b3;
   color-scheme: dark;
 }
 
@@ -84,14 +88,16 @@
   --color-reprise-soft: var(--reprise-soft);
   --color-valide: var(--valide);
   --color-valide-soft: var(--valide-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
 
-  --font-display: var(--font-sora), "Segoe UI", system-ui, sans-serif;
-  --font-sans: var(--font-figtree), "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter-tight), "Segoe UI", system-ui, sans-serif;
 
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
 
   --shadow-card: var(--shadow-card);
   --shadow-hero: var(--shadow-hero);
@@ -114,6 +120,16 @@ h1,
 h2,
 h3 {
   text-wrap: balance;
+}
+
+/* Charte « Maison » : les titres en Fraunces restent fins et élégants, même marqués « semi-gras ». */
+.font-display {
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+.font-display.font-semibold,
+.font-display.font-bold {
+  font-weight: 500;
 }
 
 :focus-visible {

@@ -19,7 +19,7 @@ export default async function AujourdhuiPage() {
   const d = await getDashboard(session);
   const stats = [
     { label: "Chantiers prévus", value: d.counts.prevus, tone: "text-ink" },
-    { label: "En cours", value: d.counts.enCours, tone: "text-azur" },
+    { label: "En cours", value: d.counts.enCours, tone: "text-info" },
     { label: "À traiter", value: d.counts.aTraiter, tone: d.counts.aTraiter ? "text-critique" : "text-ink" },
     { label: "À vérifier", value: d.counts.aVerifier, tone: "text-ink" },
   ];
@@ -60,14 +60,14 @@ export default async function AujourdhuiPage() {
         </Link>
       ))}
 
-      <Card aria-label="Chiffres du jour" className="grid grid-cols-2 gap-px overflow-hidden bg-hairline min-[760px]:grid-cols-4">
+      <section aria-label="Chiffres du jour" className="grid grid-cols-2 border-t border-ink border-b border-b-line min-[760px]:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="flex flex-col gap-1.5 bg-surface-raised px-7 py-[22px]">
-            <span className="text-sm text-ink-muted">{s.label}</span>
-            <span className={`font-display text-4xl leading-10 font-medium tracking-[-0.02em] tabular-nums ${s.tone}`}>{s.value}</span>
+          <div key={s.label} className="flex flex-col gap-2 py-5 pr-4">
+            <span className="text-[11px] font-semibold tracking-[0.14em] text-ink-muted uppercase">{s.label}</span>
+            <span className={`font-display text-[44px] leading-[48px] font-normal tabular-nums sm:text-[52px] sm:leading-[56px] ${s.tone}`}>{s.value}</span>
           </div>
         ))}
-      </Card>
+      </section>
 
       <div className="flex flex-wrap items-start gap-6">
         <Card className="min-w-0 flex-[999_1_540px] overflow-hidden">
