@@ -5,8 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Menu, X } from "lucide-react";
 
 const LINKS = [
-  ["#fonctionnalites", "Fonctionnalités"],
-  ["#comment", "Comment ça marche"],
+  ["#fonctionnalites", "Produit"],
   ["#tarifs", "Tarifs"],
   ["#questions", "Questions"],
 ] as const;
