@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Figtree, Sora } from "next/font/google";
 import "./globals.css";
 
@@ -29,7 +30,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${sora.variable} ${figtree.variable}`}>{children}</body>
+      <body className={`${sora.variable} ${figtree.variable}`}>
+        {children}
+        {/* Mesure de la vitesse réelle du site (Vercel Speed Insights, sans cookie). */}
+        <SpeedInsights />
+      </body>
     </html>
   );
 }
