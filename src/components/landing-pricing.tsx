@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Check, Sparkles } from "lucide-react";
-import { PLANS, euros, price, type Interval } from "@/lib/billing/plans";
+import { HT, PLANS, VAT_NOTE, euros, price, type Interval } from "@/lib/billing/plans";
 
 /** Tarifs de la page d'accueil, avec le choix mensuel / annuel. */
 export function LandingPricing() {
@@ -52,9 +52,9 @@ export function LandingPricing() {
               <div>
                 <p className="flex items-baseline gap-1.5">
                   <span key={amount} className="count-in font-display text-[44px] leading-none font-semibold tracking-[-0.03em]">{euros(amount)}</span>
-                  <span className="text-ink-muted">HT / {interval === "year" ? "an" : "mois"}</span>
+                  <span className="text-ink-muted">{HT.trim() ? "HT " : ""}/ {interval === "year" ? "an" : "mois"}</span>
                 </p>
-                <p className="mt-1.5 h-5 text-sm text-ink-muted">{interval === "year" ? `soit ${euros(Math.round(amount / 12))} HT par mois` : ""}</p>
+                <p className="mt-1.5 h-5 text-sm text-ink-muted">{interval === "year" ? `soit ${euros(Math.round(amount / 12))}${HT} par mois` : ""}</p>
               </div>
               <ul className="flex flex-1 flex-col gap-2.5">
                 {p.features.map((f) => (
@@ -72,7 +72,7 @@ export function LandingPricing() {
         })}
       </div>
       <p className="text-center text-sm text-ink-muted md:hidden">Faites glisser pour voir les 3 offres.</p>
-      <p className="text-center text-sm text-ink-muted">Prix par entreprise, hors taxes. Sans carte bancaire pendant l&apos;essai, sans engagement ensuite.</p>
+      <p className="text-center text-sm text-ink-muted">Prix par entreprise. {VAT_NOTE} Sans carte bancaire pendant l&apos;essai, sans engagement ensuite.</p>
     </div>
   );
 }

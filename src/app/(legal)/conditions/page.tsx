@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LEGAL, legalReady } from "@/lib/legal";
-import { PLANS, TRIAL_DAYS, euros, price } from "@/lib/billing/plans";
+import { VAT_FREE, HT, PLANS, TRIAL_DAYS, euros, price } from "@/lib/billing/plans";
 
 export const metadata: Metadata = { title: "Conditions générales" };
 
@@ -38,12 +38,12 @@ export default function Conditions() {
       <ul>
         {PLANS.map((p) => (
           <li key={p.id}>
-            {p.name} : {euros(price(p.id, "month"))} HT par mois, ou {euros(price(p.id, "year"))} HT par an (un mois offert) : {p.seats}{p.clientReport ? ", comptes rendus clients en PDF" : ""}.
+            {p.name} : {euros(price(p.id, "month"))}{HT} par mois, ou {euros(price(p.id, "year"))}{HT} par an (un mois offert) : {p.seats}{p.clientReport ? ", comptes rendus clients en PDF" : ""}.
           </li>
         ))}
       </ul>
       <p>
-        Les prix s&apos;entendent hors taxes ; la TVA applicable est ajoutée. Swipo peut faire évoluer ses prix ; le Client en est informé au moins
+        {VAT_FREE ? "TVA non applicable, art. 293 B du CGI : les prix indiqués sont les prix payés." : "Les prix s'entendent hors taxes ; la TVA applicable est ajoutée."} Swipo peut faire évoluer ses prix ; le Client en est informé au moins
         30 jours avant leur application à son abonnement et peut résilier avant cette date.
       </p>
 

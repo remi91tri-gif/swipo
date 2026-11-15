@@ -4,7 +4,7 @@ import { usePending } from "@/lib/use-pending";
 import { useState } from "react";
 import { Check, Sparkles } from "lucide-react";
 import { Button, FormError } from "@/components/ui";
-import { PLANS, euros, price, type Interval, type PlanId } from "@/lib/billing/plans";
+import { VAT_NOTE, HT, PLANS, euros, price, type Interval, type PlanId } from "@/lib/billing/plans";
 import { useHydrated } from "@/lib/use-hydrated";
 import { openPortal, redeemPilotCode, startCheckout } from "./actions";
 
@@ -70,12 +70,12 @@ export function PlanPicker({ current, active, pilotDiscount }: { current: PlanId
               </div>
               <p className="flex items-baseline gap-1.5">
                 <span className="font-display text-[34px] leading-none font-semibold tracking-[-0.02em]">{euros(due)}</span>
-                <span className="text-sm text-ink-muted">HT / {interval === "year" ? "an" : "mois"}</span>
+                <span className="text-sm text-ink-muted">{HT.trim() ? "HT " : ""}/ {interval === "year" ? "an" : "mois"}</span>
               </p>
               {(pilotDiscount || interval === "year") && (
                 <p className="-mt-2 text-sm text-ink-muted">
                   {pilotDiscount && <span className="line-through">{euros(base)}</span>}
-                  {interval === "year" && ` soit ${euros(Math.round(due / 12))} HT / mois`}
+                  {interval === "year" && ` soit ${euros(Math.round(due / 12))}${HT} / mois`}
                 </p>
               )}
               <ul className="flex flex-1 flex-col gap-2 text-[15px]">
@@ -90,7 +90,7 @@ export function PlanPicker({ current, active, pilotDiscount }: { current: PlanId
           );
         })}
       </div>
-      <p className="text-sm text-ink-muted">Prix hors taxes, TVA en plus. Paiement sécurisé par Stripe. Sans engagement : résiliable à tout moment, jusqu&apos;à la fin de la période payée.</p>
+      <p className="text-sm text-ink-muted">{VAT_NOTE} Paiement sécurisé par Stripe. Sans engagement : résiliable à tout moment, jusqu&apos;à la fin de la période payée.</p>
     </div>
   );
 }

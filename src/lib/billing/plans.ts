@@ -56,6 +56,15 @@ export const PLANS: {
 
 export const TRIAL_DAYS = 14;
 
+/**
+ * Franchise en base de TVA (auto-entrepreneur) : les prix sont affichés sans « HT » et Stripe n'ajoute pas de TVA
+ * (variable STRIPE_TVA=0 dans Vercel). Le jour où la TVA est facturée : passer à false et retirer STRIPE_TVA.
+ */
+export const VAT_FREE = true;
+/** « HT » après un prix, ou rien en franchise de TVA. */
+export const HT = VAT_FREE ? "" : " HT";
+export const VAT_NOTE = VAT_FREE ? "TVA non applicable, art. 293 B du CGI." : "Prix hors taxes, TVA en plus.";
+
 export function price(planId: PlanId, interval: Interval) {
   const p = PLANS.find((x) => x.id === planId)!;
   return interval === "year" ? p.monthly * 11 : p.monthly;
