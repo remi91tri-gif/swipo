@@ -302,7 +302,7 @@ select pg_temp.check((select trial_ends_at::date from public.companies where id 
 select pg_temp.fails(format($$update public.companies set subscription_status = 'active' where id = %L$$, :'company_a'), 'Le gérant ne peut pas s''activer un abonnement lui-même');
 update public.companies set phone = '0493000000' where id = :'company_a';
 select pg_temp.check((select phone from public.companies where id = :'company_a') = '0493000000', 'Le gérant modifie encore les coordonnées de son entreprise');
-select pg_temp.fails(format($$select public.billing_update('mauvais', %L, p_status => 'active')$$, :'company_a'), 'Sans le secret, impossible de changer l''abonnement');
+select pg_temp.fails(format($$select public.billing_update('mauvais', %L, p_status => 'active')$$, :'company_a'), 'Un utilisateur ne peut pas changer l''abonnement lui-même');
 reset role;
 insert into private.settings values ('stripe_webhook_secret_sha256', encode(sha256('whsec_test'::bytea), 'hex'));
 update public.companies set trial_ends_at = now() - interval '1 day' where id = :'company_a';
@@ -311,8 +311,14 @@ set role authenticated;
 select pg_temp.check(public.company_access(:'company_a') = 'expire', 'Après l''essai, l''accès expire');
 select pg_temp.fails(format($$insert into public.members (company_id, first_name, role) select %L, 'Agent ' || g, 'agent' from generate_series(1, 5) g$$, :'company_a'),
   'Offre Starter : pas plus de 3 salariés');
-select public.billing_update('whsec_test', :'company_a', 'cus_123', 'sub_123', 'active', 'pro', 'year', now() + interval '1 year', false);
-select pg_temp.check(public.company_access(:'company_a') = 'actif', 'Après paiement (secret correct), l''abonnement est actif');
+reset role;
+select set_config('request.jwt.claim.role', 'service_role', false);
+set role service_role;
+select public.billing_update('', :'company_a', 'cus_123', 'sub_123', 'active', 'pro', 'year', now() + interval '1 year', false);
+reset role;
+select set_config('request.jwt.claim.role', '', false);
+set role authenticated;
+select pg_temp.check(public.company_access(:'company_a') = 'actif', 'Après paiement (écrit par le serveur), l''abonnement est actif');
 reset role;
 select set_config('request.jwt.claim.role', 'service_role', false);
 select public.billing_update('', :'company_a', p_cancel => true);
