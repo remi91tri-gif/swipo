@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { CalendarDays, ClipboardList, CreditCard, Home, LayoutGrid, LogOut, Menu, Settings, Users, X } from "lucide-react";
 import { Avatar, Logo } from "./ui";
 import { ThemeSwitch } from "./theme-toggle";
@@ -14,8 +15,12 @@ const NAV = [
   { href: "/chantiers", label: "Chantiers", icon: ClipboardList },
   { href: "/clients", label: "Clients", icon: Home },
   { href: "/equipe", label: "Équipe", icon: Users },
-  { href: "/abonnement", label: "Abonnement", icon: CreditCard },
+];
+
+/** Le compte : en bas du menu, plus discret que les écrans de gestion. */
+const ACCOUNT = [
   { href: "/parametres", label: "Paramètres", icon: Settings },
+  { href: "/abonnement", label: "Abonnement", icon: CreditCard },
 ];
 
 export function Sidebar({
@@ -33,7 +38,7 @@ export function Sidebar({
   // Sur téléphone et petite tablette : barre en haut et menu « trois barres » qui se déplie.
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [path]);
-  const current = NAV.find(({ href }) => path === href || path.startsWith(href + "/"));
+  const current = [...NAV, ...ACCOUNT].find(({ href }) => path === href || path.startsWith(href + "/"));
   return (
     <aside className="flex flex-[1_1_232px] flex-col gap-8 border-line bg-surface-raised px-4 py-7 max-[871px]:sticky max-[871px]:top-0 max-[871px]:z-30 max-[871px]:gap-0 max-[871px]:border-b max-[871px]:py-2.5 min-[872px]:sticky min-[872px]:top-0 min-[872px]:h-dvh min-[872px]:max-w-[232px] min-[872px]:self-start min-[872px]:overflow-y-auto min-[872px]:border-r">
       <div className="flex items-center justify-between gap-3 pl-2 max-[871px]:pl-0">
@@ -72,6 +77,22 @@ export function Sidebar({
         })}
       </nav>
       <div className="mt-auto flex flex-col gap-3">
+        <nav aria-label="Mon compte" className="flex flex-col gap-0.5 border-t border-hairline pt-3">
+          {ACCOUNT.map(({ href, label, icon: Icon }) => {
+            const active = path === href || path.startsWith(href + "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className="flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-sm text-ink-muted hover:bg-hairline hover:text-ink max-[871px]:py-2.5 aria-[current=page]:bg-azur-subtle aria-[current=page]:font-semibold aria-[current=page]:text-azur"
+              >
+                <Icon aria-hidden size={16} strokeWidth={1.75} />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
         <ThemeSwitch />
         <div className="flex items-center gap-3 rounded-[14px] bg-surface p-3">
           <Link href="/parametres" aria-label="Mon profil et mes paramètres" className="flex min-w-0 flex-1 items-center gap-3 rounded-[10px] hover:opacity-80">
@@ -83,14 +104,59 @@ export function Sidebar({
             <span className="block truncate text-[13px] text-ink-muted">{companyName}</span>
           </span>
           </Link>
-          <form action={signOut}>
-            <button type="submit" aria-label="Se déconnecter" className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-hairline hover:text-ink">
-              <LogOut aria-hidden size={16} />
-            </button>
-          </form>
+          <SignOutButton signOut={signOut} />
         </div>
       </div>
       </div>
     </aside>
+  );
+}
+
+/** Déconnexion avec confirmation (Annuler / Se déconnecter). */
+function SignOutButton({ signOut }: { signOut: () => Promise<void> }) {
+  const [confirming, setConfirming] = useState(false);
+  const [pending, setPending] = useState(false);
+  useEffect(() => {
+    if (!confirming) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setConfirming(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [confirming]);
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Se déconnecter"
+        onClick={() => setConfirming(true)}
+        className="flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-hairline hover:text-ink"
+      >
+        <LogOut aria-hidden size={16} />
+      </button>
+      {confirming &&
+        createPortal(
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/40 px-4" onClick={() => setConfirming(false)}>
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="deconnexion-titre"
+              onClick={(e) => e.stopPropagation()}
+              className="panel-in flex w-full max-w-[400px] flex-col gap-3 rounded-2xl bg-surface-raised p-6 text-left shadow-hero"
+            >
+              <p id="deconnexion-titre" className="font-display text-xl font-semibold">Se déconnecter ?</p>
+              <p className="text-ink-muted">Vous devrez saisir à nouveau votre e-mail et votre mot de passe pour revenir.</p>
+              <form action={signOut} onSubmit={() => setPending(true)} className="mt-2 flex flex-wrap justify-end gap-2">
+                <button type="button" autoFocus onClick={() => setConfirming(false)} className="h-11 rounded-md border border-line-strong bg-surface-raised px-[18px] font-semibold text-ink hover:bg-hairline">
+                  Annuler
+                </button>
+                <button type="submit" disabled={pending} className="h-11 rounded-md bg-azur px-[18px] font-semibold text-on-azur hover:bg-azur-strong disabled:opacity-60">
+                  {pending ? "Déconnexion…" : "Se déconnecter"}
+                </button>
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
