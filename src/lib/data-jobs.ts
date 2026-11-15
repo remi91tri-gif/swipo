@@ -83,7 +83,7 @@ function demoJobs(): JobListItem[] {
 // ---------------------------------------------------------------------------
 // Clients
 // ---------------------------------------------------------------------------
-type ClientRow = { id: string; name: string; type: Client["type"]; phone: string | null; email: string | null; contact_name: string | null; notes: string | null; sites: { id: string; address: string; access_info: string | null; onsite_contact: string | null; label: string | null }[] };
+type ClientRow = { id: string; name: string; type: Client["type"]; phone: string | null; email: string | null; contact_name: string | null; notes: string | null; sites: { id: string; address: string; street?: string | null; postal_code?: string | null; city?: string | null; access_info: string | null; onsite_contact: string | null; label: string | null }[] };
 
 function toClient(c: ClientRow): Client {
   return {
@@ -94,7 +94,7 @@ function toClient(c: ClientRow): Client {
     email: c.email,
     contactName: c.contact_name,
     notes: c.notes,
-    sites: c.sites.map((s): Site => ({ id: s.id, address: s.address, accessInfo: s.access_info, onsiteContact: s.onsite_contact, label: s.label })),
+    sites: c.sites.map((s): Site => ({ id: s.id, address: s.address, street: s.street ?? null, postalCode: s.postal_code ?? null, city: s.city ?? null, accessInfo: s.access_info, onsiteContact: s.onsite_contact, label: s.label })),
   };
 }
 
@@ -103,7 +103,7 @@ export async function getClients(session: Session): Promise<Client[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("clients")
-    .select("id, name, type, phone, email, contact_name, notes, sites(id, address, access_info, onsite_contact, label)")
+    .select("id, name, type, phone, email, contact_name, notes, sites(id, address, street, postal_code, city, access_info, onsite_contact, label)")
     .eq("company_id", session.company.id)
     .order("name");
   if (error) throw error;
@@ -118,7 +118,7 @@ export async function getClientWithJobs(session: Session, id: string): Promise<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("clients")
-    .select("id, name, type, phone, email, contact_name, notes, sites(id, address, access_info, onsite_contact, label)")
+    .select("id, name, type, phone, email, contact_name, notes, sites(id, address, street, postal_code, city, access_info, onsite_contact, label)")
     .eq("company_id", session.company.id)
     .eq("id", id)
     .maybeSingle();

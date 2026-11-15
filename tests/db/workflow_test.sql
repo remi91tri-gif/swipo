@@ -393,6 +393,14 @@ set role authenticated;
 select pg_temp.fails($$select public.delete_my_account()$$, 'Un gérant passe par la suppression de l''entreprise');
 reset role;
 
+-- ===== Adresse : rue, code postal, ville =====
+reset role;
+insert into public.sites (company_id, client_id, street, postal_code, city, address) values (:'company_a', :'client', ' 18 bd de Cimiez ', '06000', 'Nice', '') returning id as site_cp \gset
+select pg_temp.check((select address from public.sites where id = :'site_cp') = '18 bd de Cimiez, 06000 Nice', 'L''adresse complète est composée à partir de la rue, du code postal et de la ville');
+insert into public.sites (company_id, client_id, address) values (:'company_a', :'client', '5 rue de France, 06400 Cannes') returning id as site_bloc \gset
+select pg_temp.check((select postal_code || ' ' || city from public.sites where id = :'site_bloc') = '06400 Cannes', 'Une adresse saisie d''un bloc est découpée');
+select pg_temp.fails(format($$update public.sites set postal_code = '6000' where id = %L$$, :'site_cp'), 'Un code postal doit compter 5 chiffres');
+
 -- ===== Conservation des données : 90 jours après la fin de l'accès =====
 reset role;
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000d1', 'luc@exemple.fr');

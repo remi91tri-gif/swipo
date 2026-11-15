@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button, Field, FormError } from "@/components/ui";
 import { addSiteAction } from "../actions";
+import { AddressFields } from "@/components/address-fields";
 
 export function AddSiteForm({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false);
@@ -18,7 +19,7 @@ export function AddSiteForm({ clientId }: { clientId: string }) {
     <form action={async (fd) => { await action(fd); }} className="flex flex-col gap-3 rounded-lg bg-surface p-4">
       <FormError message={state?.error} />
       <Field id="label" name="label" label="Nom (facultatif)" placeholder="Bureaux, résidence secondaire…" />
-      <Field id="address" name="address" label="Adresse" required />
+      <AddressFields compact />
       <Field id="access" name="access" label="Accès (facultatif)" />
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>{pending ? "Ajout…" : "Ajouter"}</Button>

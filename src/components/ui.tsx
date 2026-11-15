@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { STATUS, avatarTone, initials } from "@/lib/format";
+import { PasswordInput } from "@/components/password-input";
 import type { JobStatus } from "@/lib/types";
 
 function cx(...parts: (string | false | null | undefined)[]) {
@@ -135,13 +136,23 @@ export function Field({ label, hint, error, id, className, ...props }: Component
       <label htmlFor={id} className="text-sm text-ink-muted">
         {label}
       </label>
-      <input
-        id={id}
-        aria-invalid={!!error || undefined}
-        aria-describedby={error || hint ? `${id}-help` : undefined}
-        className="h-12 rounded-md border border-line-strong bg-surface-raised px-3.5 text-[15px] text-ink placeholder:text-ink-muted/70 aria-[invalid]:border-critique"
-        {...props}
-      />
+      {props.type === "password" ? (
+        <PasswordInput
+          id={id}
+          aria-invalid={!!error || undefined}
+          aria-describedby={error || hint ? `${id}-help` : undefined}
+          className="h-12 rounded-md border border-line-strong bg-surface-raised px-3.5 text-[15px] text-ink placeholder:text-ink-muted/70 aria-[invalid]:border-critique"
+          {...props}
+        />
+      ) : (
+        <input
+          id={id}
+          aria-invalid={!!error || undefined}
+          aria-describedby={error || hint ? `${id}-help` : undefined}
+          className="h-12 rounded-md border border-line-strong bg-surface-raised px-3.5 text-[15px] text-ink placeholder:text-ink-muted/70 aria-[invalid]:border-critique"
+          {...props}
+        />
+      )}
       {(error || hint) && (
         <p id={`${id}-help`} className={cx("text-[13px] leading-[18px]", error ? "text-critique" : "text-ink-muted")}>
           {error ?? hint}

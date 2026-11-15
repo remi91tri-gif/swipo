@@ -1,5 +1,6 @@
 "use server";
 
+import { addressError, fullAddress, readAddress } from "@/lib/address";
 import { getSession } from "@/lib/data";
 import { getConflicts } from "@/lib/data-jobs";
 import { isDemo } from "@/lib/env";
@@ -36,7 +37,11 @@ async function saveJob(_: JobFormState, fd: FormData): Promise<JobFormState> {
   if (!title) return { error: "Indiquez la prestation." };
   if (clientId === "new" && !s(fd, "new_client_name")) return { error: "Indiquez le nom du nouveau client." };
   if (!clientId) return { error: "Choisissez un client." };
-  if ((siteId === "new" || !siteId) && !s(fd, "new_address")) return { error: "Indiquez l'adresse du chantier." };
+  const a = readAddress(fd, "new_");
+  if (siteId === "new" || !siteId) {
+    const bad = addressError(a);
+    if (bad) return { error: bad };
+  }
   if (isDemo) return { error: "Mode démonstration : le chantier n'est pas enregistré." };
 
   const phone = s(fd, "new_client_phone");
@@ -48,7 +53,7 @@ async function saveJob(_: JobFormState, fd: FormData): Promise<JobFormState> {
     p_client: clientId === "new" ? null : clientId,
     p_new_client: clientId === "new" ? { name: s(fd, "new_client_name"), type: s(fd, "new_client_type") || "particulier", phone: phone ? toE164(phone) : "" } : null,
     p_site: siteId && siteId !== "new" ? siteId : null,
-    p_new_site: !siteId || siteId === "new" ? { address: s(fd, "new_address"), access_info: s(fd, "new_access") } : null,
+    p_new_site: !siteId || siteId === "new" ? { address: fullAddress(a.street, a.postalCode, a.city), access_info: s(fd, "new_access") } : null,
     p_date: s(fd, "date") || null,
     p_time: s(fd, "time") || null,
     p_duration: duration,

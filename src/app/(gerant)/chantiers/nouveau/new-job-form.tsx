@@ -1,5 +1,7 @@
 "use client";
 
+import { AddressFields } from "@/components/address-fields";
+
 import { useEffect, useMemo, useState } from "react";
 import { usePending } from "@/lib/use-pending";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -174,12 +176,9 @@ export function NewJobForm({
           )}
 
           {(clientId === "new" || siteId === "new") && (
-            <div className="flex flex-wrap gap-4 rounded-lg bg-surface p-4">
-              <div className="min-w-[240px] flex-[2]">
-                <label htmlFor="new_address" className={label}>Adresse du chantier</label>
-                <input id="new_address" name="new_address" className={input} placeholder="18 bd de Cimiez, 06000 Nice" autoComplete="street-address" />
-              </div>
-              <div className="min-w-[200px] flex-1">
+            <div className="flex flex-col gap-4 rounded-lg bg-surface p-4">
+              <AddressFields name="new_" label="Adresse du chantier" />
+              <div>
                 <label htmlFor="new_access" className={label}>Accès (facultatif)</label>
                 <input id="new_access" name="new_access" className={input} placeholder="Code, clés, étage…" />
               </div>

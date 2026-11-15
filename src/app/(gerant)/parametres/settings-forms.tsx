@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button, FormError } from "@/components/ui";
+import { PasswordInput } from "@/components/password-input";
 import { usePending } from "@/lib/use-pending";
 import { useHydrated } from "@/lib/use-hydrated";
 import { updateMember } from "../equipe/actions";
@@ -84,9 +85,9 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
       <FormError message={error} />
       <Saved text={ok} />
       <div className="grid gap-4 sm:grid-cols-3">
-        <div><label htmlFor="mdp-actuel" className={label}>Mot de passe actuel</label><input id="mdp-actuel" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required className={input} /></div>
-        <div><label htmlFor="mdp-nouveau" className={label}>Nouveau mot de passe</label><input id="mdp-nouveau" type="password" autoComplete="new-password" minLength={8} value={next} onChange={(e) => setNext(e.target.value)} required className={input} /></div>
-        <div><label htmlFor="mdp-confirmation" className={label}>Confirmer le nouveau</label><input id="mdp-confirmation" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required className={input} /></div>
+        <div><label htmlFor="mdp-actuel" className={label}>Mot de passe actuel</label><PasswordInput id="mdp-actuel" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required className={input} /></div>
+        <div><label htmlFor="mdp-nouveau" className={label}>Nouveau mot de passe</label><PasswordInput id="mdp-nouveau" autoComplete="new-password" minLength={8} value={next} onChange={(e) => setNext(e.target.value)} required className={input} /></div>
+        <div><label htmlFor="mdp-confirmation" className={label}>Confirmer le nouveau</label><PasswordInput id="mdp-confirmation" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required className={input} /></div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px] text-ink-muted">Au moins 8 caractères.</p>

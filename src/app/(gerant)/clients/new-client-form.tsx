@@ -1,5 +1,7 @@
 "use client";
 
+import { AddressFields } from "@/components/address-fields";
+
 import { useState } from "react";
 import { Button, Field, FormError } from "@/components/ui";
 import { CLIENT_TYPE_LABEL } from "@/lib/format";
@@ -36,7 +38,7 @@ export function NewClientForm() {
       </div>
       <Field id="phone" name="phone" type="tel" inputMode="tel" label="Téléphone (facultatif)" defaultValue={f.phone} />
       <Field id="email" name="email" type="email" label="E-mail (facultatif)" defaultValue={f.email} />
-      <Field id="address" name="address" label="Adresse d'intervention" required defaultValue={f.address} autoComplete="street-address" />
+      <AddressFields label="Adresse d'intervention" defaultValue={{ street: f.street, postalCode: f.postal_code, city: f.city }} />
       <Field id="access" name="access" label="Accès (facultatif)" placeholder="Code, clés, étage…" defaultValue={f.access} />
       <Button type="submit" disabled={pending || !ready}>{pending ? "Enregistrement…" : "Ajouter le client"}</Button>
     </form>

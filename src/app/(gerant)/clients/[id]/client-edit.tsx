@@ -1,5 +1,8 @@
 "use client";
 
+import { AddressFields, type AddressValue } from "@/components/address-fields";
+import { fullAddress } from "@/lib/address";
+
 import { useState } from "react";
 import { MapPin, Pencil } from "lucide-react";
 import { Button, FormError } from "@/components/ui";
@@ -82,7 +85,9 @@ export function EditClient({ client }: { client: Client }) {
 /** Une adresse du client, avec sa modification sur place. */
 export function SiteItem({ clientId, site }: { clientId: string; site: Site }) {
   const [editing, setEditing] = useState(false);
-  const [f, setF] = useState({ label: site.label ?? "", address: site.address, accessInfo: site.accessInfo ?? "", onsiteContact: site.onsiteContact ?? "" });
+  const [f, setF] = useState({ label: site.label ?? "", accessInfo: site.accessInfo ?? "", onsiteContact: site.onsiteContact ?? "" });
+  // Anciennes adresses saisies d'un bloc : la rue reprend l'adresse complète, à découper.
+  const [addr, setAddr] = useState<AddressValue>({ street: site.street ?? site.address, postalCode: site.postalCode ?? "", city: site.city ?? "" });
   const [shown, setShown] = useState(site);
   const [error, setError] = useState<string | null>(null);
   const [pending, run] = usePending();
@@ -114,17 +119,17 @@ export function SiteItem({ clientId, site }: { clientId: string; site: Site }) {
         e.preventDefault();
         void run(async () => {
           setError(null);
-          const res = await updateSiteAction(clientId, site.id, f);
+          const res = await updateSiteAction(clientId, site.id, { ...f, ...addr });
           if (res.error) setError(res.error);
           else {
-            setShown({ ...site, label: f.label || null, address: f.address, accessInfo: f.accessInfo || null, onsiteContact: f.onsiteContact || null });
+            setShown({ ...site, label: f.label || null, address: fullAddress(addr.street, addr.postalCode, addr.city), ...addr, accessInfo: f.accessInfo || null, onsiteContact: f.onsiteContact || null });
             setEditing(false);
           }
         });
       }}
     >
       <FormError message={error} />
-      <div><label htmlFor={id("adresse")} className={label}>Adresse</label><input id={id("adresse")} value={f.address} onChange={set("address")} required className={input} /></div>
+      <AddressFields value={addr} onChange={setAddr} compact />
       <div><label htmlFor={id("nom")} className={label}>Nom du lieu (facultatif)</label><input id={id("nom")} value={f.label} onChange={set("label")} placeholder="Agence, appartement 3B…" className={input} /></div>
       <div><label htmlFor={id("acces")} className={label}>Accès</label><input id={id("acces")} value={f.accessInfo} onChange={set("accessInfo")} placeholder="Code, clés, étage…" className={input} /></div>
       <div><label htmlFor={id("contact")} className={label}>Contact sur place</label><input id={id("contact")} value={f.onsiteContact} onChange={set("onsiteContact")} className={input} /></div>

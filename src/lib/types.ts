@@ -90,6 +90,9 @@ export type ClientType = "particulier" | "professionnel" | "syndic" | "agence";
 export type Site = {
   id: string;
   address: string;
+  street?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
   accessInfo: string | null;
   onsiteContact: string | null;
   label: string | null;
