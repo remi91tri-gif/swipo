@@ -313,6 +313,14 @@ select pg_temp.fails(format($$insert into public.members (company_id, first_name
   'Offre Starter : pas plus de 3 salariés');
 select public.billing_update('whsec_test', :'company_a', 'cus_123', 'sub_123', 'active', 'pro', 'year', now() + interval '1 year', false);
 select pg_temp.check(public.company_access(:'company_a') = 'actif', 'Après paiement (secret correct), l''abonnement est actif');
+reset role;
+select set_config('request.jwt.claim.role', 'service_role', false);
+select public.billing_update('', :'company_a', p_cancel => true);
+select set_config('request.jwt.claim.role', '', false);
+select pg_temp.check((select cancel_at_period_end from public.companies where id = :'company_a'), 'Le serveur (clé secrète Supabase) écrit l''abonnement sans le secret Stripe');
+update public.companies set cancel_at_period_end = false where id = :'company_a';
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', false);
+set role authenticated;
 select pg_temp.check((select plan || '/' || billing_interval from public.companies where id = :'company_a') = 'pro/year', 'Offre Pro annuelle enregistrée');
 insert into public.members (company_id, first_name, role) values (:'company_a', 'Julie', 'gerant');
 select pg_temp.check((select count(*) from public.members where company_id = :'company_a' and role = 'gerant') = 2, 'Offre Pro : un 2e gérant est possible');

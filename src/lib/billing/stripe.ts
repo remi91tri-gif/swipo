@@ -1,4 +1,5 @@
 import "server-only";
+import { adminClient, adminEnabled } from "@/lib/supabase/admin";
 import Stripe from "stripe";
 import { createClient as createSupabase } from "@supabase/supabase-js";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/env";
@@ -119,9 +120,11 @@ export async function saveBilling(args: {
   subscription?: Stripe.Subscription | null;
   clearSubscription?: boolean;
 }) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret) throw new Error("STRIPE_WEBHOOK_SECRET manquante");
-  const sb = createSupabase(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } });
+  // Avec la clé secrète Supabase (rôle serveur), la base accepte l'écriture directement ;
+  // sinon, elle vérifie l'empreinte du secret du webhook Stripe.
+  const secret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
+  const sb = adminEnabled ? adminClient() : createSupabase(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } });
+  if (!adminEnabled && !secret) throw new Error("STRIPE_WEBHOOK_SECRET manquante");
   const sub = args.subscription;
   const item = sub?.items.data[0];
   const { error } = await sb.rpc("billing_update", {

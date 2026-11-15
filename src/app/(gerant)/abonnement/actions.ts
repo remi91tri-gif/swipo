@@ -27,7 +27,11 @@ async function manager() {
 async function customerFor(companyId: string, companyName: string) {
   const supabase = await createClient();
   const { data } = await supabase.from("companies").select("stripe_customer_id").eq("id", companyId).single();
-  if (data?.stripe_customer_id) return data.stripe_customer_id as string;
+  if (data?.stripe_customer_id) {
+    // Un client créé en mode test n'existe pas en mode réel (et inversement) : on en crée un nouveau.
+    const existing = await stripe().customers.retrieve(data.stripe_customer_id as string).catch(() => null);
+    if (existing && !existing.deleted) return existing.id;
+  }
   const { data: auth } = await supabase.auth.getClaims();
   const customer = await stripe().customers.create({
     email: (auth?.claims.email as string | undefined) || undefined,
