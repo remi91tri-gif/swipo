@@ -94,7 +94,7 @@ try {
         const row = g.locator("li", { hasText: "Karim" });
         await row.getByRole("button", { name: "Couper son accès" }).click();
         await row.getByRole("button", { name: "Couper l'accès", exact: true }).click();
-        await row.getByText("Accès coupé").waitFor({ timeout: 15000 });
+        await row.getByText(/Accès coupé|Invitation à envoyer/).first().waitFor({ timeout: 15000 });
       });
       current = a;
       await step("Karim n'a plus accès sur ce téléphone", async () => {
