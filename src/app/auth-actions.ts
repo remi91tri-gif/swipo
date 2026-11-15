@@ -30,8 +30,23 @@ export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: authError(error.message), fields: { email } };
-  // Un compte d'agent ou de chef d'équipe va toujours dans l'espace agent.
-  redirect(data.user?.app_metadata?.swipo_espace === "agent" ? "/agent" : "/aujourdhui");
+  const isAgentAccount = data.user?.app_metadata?.swipo_espace === "agent";
+
+  // Page de connexion gérant : un compte d'agent ou de chef d'équipe n'y est pas reconnu.
+  // On le déconnecte aussitôt et on répond comme pour des identifiants inconnus.
+  if (text(fd, "espace") !== "agent") {
+    let refused = isAgentAccount;
+    if (!refused) {
+      const { data: roles } = await supabase.from("members").select("role").eq("user_id", data.user.id).eq("active", true);
+      refused = !!roles?.length && !roles.some((r) => r.role === "gerant");
+    }
+    if (refused) {
+      await supabase.auth.signOut({ scope: "local" });
+      return { error: "E-mail ou mot de passe incorrect.", fields: { email } };
+    }
+    redirect("/aujourdhui");
+  }
+  redirect(isAgentAccount ? "/agent" : "/aujourdhui");
 }
 
 export async function signUp(_: FormState, fd: FormData): Promise<FormState> {

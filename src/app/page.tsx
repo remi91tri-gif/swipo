@@ -162,6 +162,7 @@ export default function Home() {
             <a href="#questions" className="transition-colors hover:text-ink">Questions</a>
           </div>
           <div className="ml-auto flex items-center gap-1 md:ml-0">
+            <Link href="/agent/connexion" className="hidden h-10 items-center px-3 text-[15px] text-ink-muted transition-colors hover:text-ink lg:flex">Espace agent</Link>
             <Link href="/connexion" className="hidden h-10 items-center px-3 text-[15px] font-semibold text-ink transition-colors hover:text-azur sm:flex">Se connecter</Link>
             <LinkButton href="/inscription" className="h-10 rounded-full px-5 max-sm:hidden">Essai gratuit</LinkButton>
             <MobileMenu />

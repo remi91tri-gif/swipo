@@ -87,9 +87,11 @@ try {
     await a2.waitForURL("**/agent", { timeout: 30000 });
   });
   const a3 = await page({ width: 390, height: 844 });
-  await step("Depuis la connexion gérant aussi, il arrive dans l'espace agent", async () => {
+  await step("Sur la connexion gérant, ses identifiants d'agent sont refusés", async () => {
     await login(a3, "/connexion", AGENT, AGENT_PW);
-    await a3.waitForURL("**/agent", { timeout: 30000 });
+    await a3.getByText("E-mail ou mot de passe incorrect.").waitFor({ timeout: 15000 });
+    await a3.goto(B + "/aujourdhui");
+    if (new URL(a3.url()).pathname !== "/connexion") throw new Error("une session a été ouverte malgré le refus");
   });
   current = g;
   await step("Le gérant coupe l'accès de Karim", async () => {
