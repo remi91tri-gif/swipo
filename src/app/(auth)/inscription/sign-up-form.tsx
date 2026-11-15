@@ -36,6 +36,11 @@ export function SignUpForm() {
         <Button type="submit" disabled={pending} className="mt-1 h-12 text-base">
           {pending ? "Création…" : "Créer mon entreprise"}
         </Button>
+        <p className="text-center text-[13px] text-ink-muted">
+          En créant votre compte, vous acceptez les{" "}
+          <a href="/conditions" target="_blank" className="font-semibold underline underline-offset-2">conditions générales</a> et la{" "}
+          <a href="/confidentialite" target="_blank" className="font-semibold underline underline-offset-2">politique de confidentialité</a>.
+        </p>
       </form>
     </Card>
   );

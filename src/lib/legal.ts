@@ -7,27 +7,27 @@
  */
 export const LEGAL = {
   /** Raison sociale, ex. « Swipo SAS ». */
-  name: "",
+  name: "Rémi Denizot EI",
   /** Forme juridique, ex. « SAS au capital de 1 000 € ». */
-  legalForm: "",
+  legalForm: "entrepreneur individuel (micro-entreprise), nom commercial « Swipo »",
   /** Adresse du siège. */
-  address: "",
+  address: "89 boulevard de la Madeleine, 06000 Nice",
   /** SIREN ou numéro RCS, ex. « RCS Nice 123 456 789 ». */
-  registration: "",
+  registration: "SIRET 101 008 415 00016",
   /** Numéro de TVA intracommunautaire (facultatif si non assujetti). */
   vat: "",
   /** Directeur ou directrice de la publication (le représentant légal). */
-  director: "",
+  director: "Rémi Denizot",
   /** Adresse e-mail de contact (support et données personnelles). */
-  email: "",
+  email: "contact.swipo@gmail.com",
   /** Téléphone (facultatif). */
   phone: "",
   /** Ville du tribunal compétent (siège), ex. « Nice ». */
-  court: "",
+  court: "Nice",
 };
 
 export const legalReady = [LEGAL.name, LEGAL.legalForm, LEGAL.address, LEGAL.registration, LEGAL.director, LEGAL.email, LEGAL.court].every(
   (v) => v.trim().length > 0,
 );
 
-export const LEGAL_UPDATED = "15 novembre 2026";
+export const LEGAL_UPDATED = "16 novembre 2026";

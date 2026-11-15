@@ -28,7 +28,7 @@ export default function Confidentialite() {
       <h2>2. Données traitées</h2>
       <ul>
         <li>Gérant : nom, prénom, e-mail, téléphone, nom de l&apos;entreprise, données de facturation (le numéro de carte est traité uniquement par Stripe).</li>
-        <li>Salariés : prénom, nom, téléphone, rôle, actions réalisées sur les chantiers et leur heure, photos prises, signalements.</li>
+        <li>Salariés : prénom, nom, téléphone, e-mail s&apos;ils créent leur accès, rôle, actions réalisées sur les chantiers et leur heure, photos prises, signalements.</li>
         <li>Clients de l&apos;entreprise : nom, coordonnées, adresses des chantiers, consignes d&apos;accès saisies par l&apos;entreprise.</li>
         <li>Données techniques : journaux de connexion nécessaires à la sécurité.</li>
       </ul>
@@ -54,12 +54,15 @@ export default function Confidentialite() {
         <li>Supabase (base de données et fichiers), hébergement en Suède.</li>
         <li>Vercel (hébergement de l&apos;application), traitements en Suède ; société américaine, transferts encadrés par les clauses contractuelles types de la Commission européenne.</li>
         <li>Stripe (paiement), pour la facturation uniquement.</li>
+        <li>Google (Gmail), pour l&apos;envoi des e-mails du service : invitation, mot de passe oublié, rappels.</li>
+        <li>Vercel Speed Insights, pour mesurer la vitesse des pages, sans cookie et sans identifier les visiteurs.</li>
+        <li>Base officielle des adresses de l&apos;État (geo.api.gouv.fr) : seul le code postal saisi lui est envoyé, pour proposer la ville.</li>
       </ul>
 
       <h2>6. Cookies</h2>
       <p>
         Swipo n&apos;utilise que des éléments strictement nécessaires : le cookie de connexion, et la mémorisation sur l&apos;appareil du thème choisi et des
-        actions faites sans réseau. Aucun cookie publicitaire ni de mesure d&apos;audience : aucun consentement n&apos;est donc demandé.
+        actions faites sans réseau. Aucun cookie publicitaire ni de mesure d&apos;audience (la mesure de vitesse des pages n&apos;en dépose pas) : aucun consentement n&apos;est donc demandé.
       </p>
 
       <h2>7. Vos droits</h2>

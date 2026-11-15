@@ -90,7 +90,8 @@ export function PlanPicker({ current, active, pilotDiscount }: { current: PlanId
           );
         })}
       </div>
-      <p className="text-sm text-ink-muted">{VAT_NOTE} Paiement sécurisé par Stripe. Sans engagement : résiliable à tout moment, jusqu&apos;à la fin de la période payée.</p>
+      <p className="text-sm text-ink-muted">{VAT_NOTE} Paiement sécurisé par Stripe. Sans engagement : résiliable à tout moment, jusqu&apos;à la fin de la période payée.{" "}
+        <a href="/conditions" target="_blank" className="underline underline-offset-2">Conditions générales de vente</a>.</p>
     </div>
   );
 }
