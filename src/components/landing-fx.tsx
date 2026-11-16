@@ -93,10 +93,10 @@ const SCENES = [
 ];
 
 const JOBS = [
-  { time: "08:00", title: "Vitrerie · Boulangerie du Port", who: "Karim" },
-  { time: "10:30", title: "Remise en état · Rue Barla", who: "Inès, Yanis" },
-  { time: "14:00", title: "Fin de chantier · Villa Arson", who: "Karim" },
-  { time: "16:30", title: "Vitrerie · Cabinet Masséna", who: "Yanis" },
+  { time: "08:00", title: "Vitrerie · Boulangerie du Port", who: "Paul" },
+  { time: "10:30", title: "Remise en état · Rue Barla", who: "Léa, Vincent" },
+  { time: "14:00", title: "Fin de chantier · Villa Arson", who: "Paul" },
+  { time: "16:30", title: "Vitrerie · Cabinet Masséna", who: "Vincent" },
 ];
 
 export function HeroDemo() {
