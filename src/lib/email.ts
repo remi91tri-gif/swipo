@@ -4,7 +4,8 @@ import nodemailer from "nodemailer";
 /** Envoi d'e-mails depuis l'adresse Gmail de Swipo (mot de passe d'application dans SMTP_PASSWORD). */
 export const SENDER = process.env.SMTP_USER ?? "contact.swipo@gmail.com";
 export const emailEnabled = !!process.env.SMTP_PASSWORD;
-export const SITE_URL = (process.env.SITE_URL ?? "https://swipo.vercel.app").replace(/\/$/, "");
+import { SITE_URL } from "@/lib/site";
+export { SITE_URL };
 
 let transport: nodemailer.Transporter | null = null;
 function mailer() {

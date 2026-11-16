@@ -4,7 +4,7 @@ import { isDemo } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { JoinButton } from "./join-button";
 
-export const metadata: Metadata = { title: "Rejoindre votre équipe" };
+export const metadata: Metadata = { title: "Rejoindre votre équipe", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function JoinPage({ params }: { params: Promise<{ token: string }> }) {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -6,6 +7,9 @@ import { DemoBanner } from "@/components/demo-banner";
 import { NotificationsFeed } from "@/components/notifications";
 import { Sidebar } from "@/components/sidebar";
 import { getSession } from "@/lib/data";
+
+// Espace privé : Google ne doit pas l'indexer.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 // Toujours calculé à la visite : la date du jour et les données changent.
 export const dynamic = "force-dynamic";

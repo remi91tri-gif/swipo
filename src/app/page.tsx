@@ -8,11 +8,15 @@ import { HeroDemo, LandingFx } from "@/components/landing-fx";
 import { LandingPricing } from "@/components/landing-pricing";
 import { MobileCta, MobileMenu } from "@/components/landing-mobile";
 import { legalReady } from "@/lib/legal";
+import { PLANS } from "@/lib/billing/plans";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: { absolute: "Swipo · Le suivi de chantiers des entreprises de nettoyage" },
+  title: { absolute: "Swipo · Logiciel de gestion pour entreprise de nettoyage" },
   description:
-    "Planning, missions des agents sur téléphone, photos avant/après, imprévus en direct et comptes rendus clients en PDF. Swipo simplifie le quotidien des entreprises de nettoyage.",
+    "Swipo, le logiciel qui soulage les gérants d'entreprise de nettoyage : planning, missions des agents sur téléphone, photos avant/après, imprévus en direct et comptes rendus clients en PDF. Essai gratuit 14 jours.",
+  alternates: { canonical: "/" },
+  keywords: ["logiciel entreprise de nettoyage", "logiciel nettoyage", "gestion entreprise de nettoyage", "suivi de chantier nettoyage", "planning agents de nettoyage", "application agent d'entretien", "compte rendu d'intervention", "Swipo"],
 };
 
 // Contenu statique : la page s'affiche instantanément.
@@ -145,9 +149,47 @@ function ReportVisual() {
   );
 }
 
+// Données structurées lues par Google : le logiciel, ses prix et la FAQ de la page.
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organisation`,
+      name: "Swipo",
+      url: SITE_URL,
+      logo: `${SITE_URL}/brand/icone-512.png`,
+      email: "contact.swipo@gmail.com",
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "Swipo",
+      url: SITE_URL,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web, iOS, Android",
+      inLanguage: "fr-FR",
+      description:
+        "Logiciel de gestion pour entreprise de nettoyage : planning, missions des agents sur téléphone, photos avant/après, imprévus et comptes rendus clients en PDF.",
+      publisher: { "@id": `${SITE_URL}/#organisation` },
+      offers: PLANS.map((p) => ({
+        "@type": "Offer",
+        name: p.name,
+        price: (p.monthly / 100).toFixed(2),
+        priceCurrency: "EUR",
+        url: `${SITE_URL}/inscription`,
+      })),
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+    },
+  ],
+};
+
 export default function Home() {
   return (
     <div className="min-h-dvh overflow-x-clip">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replace(/</g, "\\u003c") }} />
       <LandingFx />
 
       {/* En-tête */}
