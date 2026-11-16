@@ -25,8 +25,8 @@ export const metadata: Metadata = {
     url: "/",
   },
   twitter: { card: "summary_large_image", title: "Swipo · Le logiciel des entreprises de nettoyage", description: DESCRIPTION },
-  // Code de validation Google Search Console (balise HTML), réglé dans Vercel.
-  verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
+  // Code de validation Google Search Console (balise HTML, propriété https://swipo.vercel.app).
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION ?? "x333QXlGmMo2CbxOGhm2reV0gX6E36_jOjVODJo2jXc" },
 };
 
 export const viewport: Viewport = {
