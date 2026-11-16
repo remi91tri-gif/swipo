@@ -3,7 +3,7 @@
 // puisse ouvrir ses missions et continuer à travailler sans réseau (sous-sol, cave, mode avion).
 // Les gestes faits hors connexion sont gardés à part (IndexedDB) et envoyés au retour du réseau.
 
-const VERSION = "swipo-v3";
+const VERSION = "swipo-v4";
 const STATIC = `${VERSION}-fichiers`;
 const PAGES = `${VERSION}-missions`;
 

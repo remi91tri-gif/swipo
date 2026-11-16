@@ -177,9 +177,9 @@ export function Logo({ height = 28 }: { height?: number }) {
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/swipo-logo.svg" alt="Swipo" width={width} height={height} className="only-light block" />
+      <img src="/brand/swipo-logo.svg?v=maison" alt="Swipo" width={width} height={height} className="only-light block" />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/swipo-logo-blanc.svg" alt="Swipo" width={width} height={height} className="only-dark block" />
+      <img src="/brand/swipo-logo-blanc.svg?v=maison" alt="Swipo" width={width} height={height} className="only-dark block" />
     </>
   );
 }
